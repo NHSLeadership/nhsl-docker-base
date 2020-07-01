@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    app: test-app
+  name: test-app
+spec:
+  volumes:
+    - name: shared-app
+      emptyDir: {}
+    - name: run
+      emptyDir: {}
+    - name: tmp-openresty
+      emptyDir: {}
+    - name: tmp-phpfpm
+      emptyDir: {}
+  containers:
+  - image: test-nginx:0.3
+    name: nginx
+    resources: {}
+    securityContext:
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+    volumeMounts:
+      - name: shared-app
+        mountPath: /app-shared
+      - name: run
+        mountPath: /nhsla/run
+      - name: tmp-openresty
+        mountPath: /tmp
+    imagePullPolicy: Never
+    ports:
+    - containerPort: 8080
+      name: http
+      protocol: TCP
+  - image: test-php:0.3
+    name: phpfpm
+    resources: {}
+    imagePullPolicy: Never
+    livenessProbe:
+      exec:
+          command:
+              - php-fpm-healthcheck
+      initialDelaySeconds: 0
+      periodSeconds: 10
+    readinessProbe:
+      exec:
+          command:
+              - php-fpm-healthcheck
+      initialDelaySeconds: 1
+      periodSeconds: 5
+    securityContext:
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+    volumeMounts:
+      - name: shared-app
+        mountPath: /app-shared
+      - name: run
+        mountPath: /nhsla/run
+      - name: tmp-phpfpm
+        mountPath: /tmp
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: 'nginx'
+  namespace: default
+spec:
+  ports:
+  - name: openresty
+    port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: 'test-app'
+  sessionAffinity: None
+  type: NodePort
