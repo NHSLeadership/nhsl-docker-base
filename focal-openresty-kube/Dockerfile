@@ -4,7 +4,8 @@ LABEL maintainer="devops@nhsx.uk"
 ARG DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-ADD entrypoint.sh /entrypoint.sh
+COPY entrypoint.sh /nhsla/scripts/entrypoint.sh
+COPY --chown=1000:1000 setup /setup
 
 RUN apt-get update \
   && apt-get install \
@@ -32,10 +33,10 @@ RUN apt-get update \
   && ln -sf /dev/stdout /usr/local/openresty/nginx/logs/access.log \
   && ln -sf /dev/stderr /usr/local/openresty/nginx/logs/error.log
 
-ADD error_pages/* /usr/local/openresty/nginx/html/
-ADD conf/nginx.conf /etc/openresty/nginx.conf
-ADD conf/site.conf /etc/openresty/site.conf
+COPY error_pages/* /usr/local/openresty/nginx/html/
+COPY conf/nginx.conf /etc/openresty/nginx.conf
+COPY conf/site.conf /etc/openresty/site.conf
 
 USER 1000:1000
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/nhsla/scripts/entrypoint.sh"]
 CMD ["/usr/local/openresty/bin/openresty"]

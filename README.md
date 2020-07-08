@@ -6,6 +6,8 @@
 >
 > Special shout-out to [Parallax](https://parall.ax) for help and inspiration.
 
+This repository provides two images, one containing PHP-FPM (also able to run cron) and another running OpenResty. They are designed to be used together in a single Kubernetes pod.
+
 ## Rationale
 
 We use Kubernetes to make the most of our infrastructure. The majority of our applications (~90%) are built on PHP and so it made sense to create base images providing a standard build to run our applications from. In keeping with Kubernetes best practice we moved to an architecture running PHP-FPM in a separate container to the OpenResty web server within the same pod.
@@ -14,23 +16,33 @@ In future it would be nice to split PHP-FPM and OpenResty into separately scalab
 
 This README will assume Kubernetes for context and so may make references to Kubernetes terminology such as jobs, pods etc.
 
-## Modes (CRON)
+## Cron
 
-We try to run cron jobs within Kubernetes it self but it doesn't handle things well when you need to run jobs reliably every minute (such as with WordPress) - in these instances we run a single PHP-FPM pod in "worker" mode.
+We try to run cron jobs within Kubernetes it self but it doesn't handle things well when you need to run jobs reliably every minute - in these instances we run a single PHP-FPM pod in "cron" mode.
 
-By default the PHP-FPM container runs in "web" mode. If you need to run cron jobs you should add a second pod deployment, using the PHP-FPM container with command `/startup-worker.sh`.
+By default the PHP-FPM container runs in "web" mode. If you need to run cron jobs you should add a second pod deployment, using the PHP-FPM container only with the `ROLE` environment variable set to `cron`.
 
-## OpenResty configuration override
+We utilise [Supercronic](https://github.com/aptible/supercronic) to provide Cron functionality in our image. It provides a modern Cron binary that can run as a non-root user and provides more rich logging capability.
 
-We found multiple situations where we needed to override the configuration used by OpenResty. For this reason if you include a configuration file (or mount a ConfigMap) at /openresty-web.conf we will ignore all other configuration set via Environment Variables and use this for your site definition instead.
+Your crontab file should be stored at `/nhsla/cron` in the image with a structure such as:
+
+`* * * * * /usr/bin/echo "This is a test cron."`
+
+The file should be owned by the `nhsla` user (UID 1000) as this is what Cron runs as.
+
+## Configuration overrides
+
+We ship a basic configuration for both PHP-FPM and OpenResty which should work for most situations however there is a need to override these occasionally.
+
+We no longer use a long list of runtime variables to do this - instead we simply overwrite the configuration using Kubernetes ConfigMaps which also allows us to work around the readOnlyRootFilesystem easily whilst keeping application specific configurations in their relevant Git repositories.
 
 ## Environment Variables
 
-|      |      |      |      |      |
+|Variable      |Description      |Default      |Image      |      |
 | ---- | ---- | ---- | ---- | ---- |
-|      |      |      |      |      |
-|      |      |      |      |      |
-|      |      |      |      |      |
+| MAIL_HOST | Set the SMTP mail host for the system's SSMTP mail relay service | outbound.kube-mail |PHP-FPM      |      |
+| MAIL_PORT | Set the SMTP mail port for the system's SSMTP mail relay service | 25 |PHP-FPM      |      |
+| ATATUS_APM_LICENSE_KEY     | Provides a licence key to enable the Atatus APM PHP module      | NONE      |PHP-FPM      |      |
 |      |      |      |      |      |
 |      |      |      |      |      |
 |      |      |      |      |      |
@@ -40,14 +52,16 @@ We found multiple situations where we needed to override the configuration used 
 
 ## Running commands on startup
 
+Each container starts up using Docker's Entryfile directive. This calls the script at /entryfile.sh which will run various scripts in succession.
+
 Each container looks for a relevant startup script. If found it will be executed last but before the services are started:
 
 | Path               | Runs on                   | Priority |
 | ------------------ | ------------------------- | -------- |
-| /startup-all.sh    | All containers            | 1        |
-| /startup-web.sh    | OpenResty only            | 2        |
-| /startup-php.sh    | PHP-FPM only, not workers | 2        |
-| /startup-worker.sh | PHP-FPM workers only      | 3        |
+| /nhsla/scripts/startup-all.sh    | All containers            | 1        |
+| /nhsla/scripts/startup-web.sh    | OpenResty only            | 2        |
+| /nhsla/scripts/startup-php.sh    | PHP-FPM only, not workers | 2        |
+| /nhsla/scripts/startup-worker.sh | PHP-FPM workers only      | 3        |
 
 In the case you have mixed scripts where multiple may run in a single container then scripts are executed from lowest priority number first to highest (i.e. 1, then 2, then 3).
 
