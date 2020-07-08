@@ -54,6 +54,8 @@ We no longer use a long list of runtime variables to do this - instead we simply
 
 Each container starts up using Docker's Entryfile directive. This calls the script at /entryfile.sh which will run various scripts in succession.
 
+If the `AWS_HOST_ENVIRONMENT` environment variable exists we assume the two images are running inside a Kubernetes Pod together and application code is copied from `/app` into a shared emptyDir volume at `/app-shared`.
+
 Each container looks for a relevant startup script. If found it will be executed last but before the services are started:
 
 | Path               | Runs on                   | Priority |
