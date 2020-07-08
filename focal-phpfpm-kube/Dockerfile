@@ -84,47 +84,43 @@ RUN apt-get update \
   && mkdir -p /nhsla \
   && chown -R nhsla:nhsla /nhsla \
   && chown -R nhsla:nhsla /app \
-  && chmod 755 /entrypoint.sh && \
-  sed -i -e 's|variables_order = "GPCS"|variables_order = "EGPCS"|g' /etc/php/${PHP_VERSION}/fpm/php.ini && \
-  sed -i -e 's|variables_order = "GPCS"|variables_order = "EGPCS"|g' /etc/php/${PHP_VERSION}/cli/php.ini && \
-  sed -i -e 's|;clear_env = no|clear_env = no|g' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf && \
-  sed -i "s|;date.timezone =.*|date.timezone = UTC|" /etc/php/${PHP_VERSION}/fpm/php.ini && \
-  sed -i "s|upload_max_filesize = .*|upload_max_filesize = 1G|" /etc/php/${PHP_VERSION}/fpm/php.ini && \
-  sed -i "s|post_max_size = .*|post_max_size = 512M|" /etc/php/${PHP_VERSION}/fpm/php.ini && \
-  sed -i "s|;cgi.fix_pathinfo=1|cgi.fix_pathinfo=0|" /etc/php/${PHP_VERSION}/fpm/php.ini && \
-  sed -i -e "s|error_log =.*|error_log = \/proc\/self\/fd\/2|" /etc/php/${PHP_VERSION}/fpm/php-fpm.conf && \
-  sed -i -e "s|;daemonize\s*=\s*yes|daemonize = no|g" /etc/php/${PHP_VERSION}/fpm/php-fpm.conf && \
-  sed -i "s|;catch_workers_output = .*|catch_workers_output = yes|" /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf && \
-  sed -i "s|listen = .*|listen = 127.0.0.1:9000|" /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf && \
-  sed -i -e "s|pid =.*|pid = \/nhsla\/run\/php-fpm.pid|" /etc/php/${PHP_VERSION}/fpm/php-fpm.conf && \
-  sed -i -e 's|atatus.trace.response_time = 2000|atatus.trace.response_time = 1500|g' /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini && \
-  sed -i -e 's|atatus.agent.log_file = "/var/log/atatus/agent.log"|atatus.agent.log_file = "/dev/stdout"|g' /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini && \
-  sed -i -e 's|atatus.collector.log_file = "/var/log/atatus/collector.log"|atatus.collector.log_file = "/dev/stdout"|g' /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini && \
-  sed -i -e 's|atatus.collector.pidfile = "/var/run/atatus-php-collector.pid"|atatus.collector.pidfile = "/nhsla/run/atatus.pid"|g' /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini && \
-  sed -i -e 's|;log_level = notice|log_level = warning|g' /etc/php/${PHP_VERSION}/fpm/php-fpm.conf && \
-  rm -rf /etc/cron.d/php && \
-  rm -rf /etc/cron.d/e2scrub_all && \
-  rm -rf /etc/php/${PHP_VERSION}/fpm/php.ini && \
-  rm -rf /etc/php/${PHP_VERSION}/php-fpm.conf && \
-  rm -rf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf && \
-  rm -rf /etc/php/${PHP_VERSION}/fpm/conf.d/atatus.ini && \
-  ln -s /nhsla/config/php.ini /etc/php/${PHP_VERSION}/fpm/php.ini && \
-  ln -s /nhsla/config/php-fpm.conf /etc/php/${PHP_VERSION}/php-fpm.conf && \
-  ln -s /nhsla/config/www.conf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf && \
-  ln -s /nhsla/config/atatus.ini /etc/php/${PHP_VERSION}/fpm/conf.d/atatus.ini && \
-  rm -rf /etc/ssmtp/ssmtp.conf && \
-  ln -s /nhsla/config/ssmtp.conf /etc/ssmtp/ssmtp.conf && \
-  chmod +x /setup/setup.sh && \
-  mkdir -p /nhsla/cron && \
-  chown -R nhsla:nhsla /nhsla/cron && \
-  curl -fsSLO "$SUPERCRONIC_URL" \
+  && chmod 755 /entrypoint.sh \
+  && sed -i -e 's|variables_order = "GPCS"|variables_order = "EGPCS"|g' /etc/php/${PHP_VERSION}/fpm/php.ini \
+  && sed -i -e 's|variables_order = "GPCS"|variables_order = "EGPCS"|g' /etc/php/${PHP_VERSION}/cli/php.ini \
+  && sed -i -e 's|;clear_env = no|clear_env = no|g' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
+  && sed -i "s|;date.timezone =.*|date.timezone = UTC|" /etc/php/${PHP_VERSION}/fpm/php.ini \
+  && sed -i "s|upload_max_filesize = .*|upload_max_filesize = 1G|" /etc/php/${PHP_VERSION}/fpm/php.ini \
+  && sed -i "s|post_max_size = .*|post_max_size = 512M|" /etc/php/${PHP_VERSION}/fpm/php.ini \
+  && sed -i "s|;cgi.fix_pathinfo=1|cgi.fix_pathinfo=0|" /etc/php/${PHP_VERSION}/fpm/php.ini \
+  && sed -i -e "s|error_log =.*|error_log = \/proc\/self\/fd\/2|" /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \
+  && sed -i -e "s|;daemonize\s*=\s*yes|daemonize = no|g" /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \
+  && sed -i "s|;catch_workers_output = .*|catch_workers_output = yes|" /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
+  && sed -i "s|listen = .*|listen = 127.0.0.1:9000|" /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
+  && sed -i -e "s|pid =.*|pid = \/nhsla\/run\/php-fpm.pid|" /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \
+  && sed -i -e 's|atatus.trace.response_time = 2000|atatus.trace.response_time = 1500|g' /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini \
+  && sed -i -e 's|atatus.agent.log_file = "/var/log/atatus/agent.log"|atatus.agent.log_file = "/dev/stdout"|g' /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini \
+  && sed -i -e 's|atatus.collector.log_file = "/var/log/atatus/collector.log"|atatus.collector.log_file = "/dev/stdout"|g' /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini \
+  && sed -i -e 's|atatus.collector.pidfile = "/var/run/atatus-php-collector.pid"|atatus.collector.pidfile = "/nhsla/run/atatus.pid"|g' /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini \
+  && sed -i -e 's|;log_level = notice|log_level = warning|g' /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \
+  && rm -rf /etc/php/${PHP_VERSION}/fpm/php.ini \
+  && rm -rf /etc/php/${PHP_VERSION}/php-fpm.conf \
+  && rm -rf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
+  && rm -rf /etc/php/${PHP_VERSION}/fpm/conf.d/atatus.ini \
+  && ln -s /nhsla/config/php.ini /etc/php/${PHP_VERSION}/fpm/php.ini \
+  && ln -s /nhsla/config/php-fpm.conf /etc/php/${PHP_VERSION}/php-fpm.conf \
+  && ln -s /nhsla/config/www.conf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
+  && ln -s /nhsla/config/atatus.ini /etc/php/${PHP_VERSION}/fpm/conf.d/atatus.ini \
+  && rm -rf /etc/ssmtp/ssmtp.conf \
+  && ln -s /nhsla/config/ssmtp.conf /etc/ssmtp/ssmtp.conf \
+  && chmod +x /setup/setup.sh \
+  && curl -fsSLO "$SUPERCRONIC_URL" \
   && echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - \
   && chmod +x "$SUPERCRONIC" \
   && mv "$SUPERCRONIC" "/usr/local/bin/${SUPERCRONIC}" \
-  && ln -s "/usr/local/bin/${SUPERCRONIC}" /usr/local/bin/supercronic && \
-  date > /build_image_date
+  && ln -s "/usr/local/bin/${SUPERCRONIC}" /usr/local/bin/supercronic \
+  && date > /image_base_build_date
 
 COPY --chown=nhsla:nhsla setup/cron /nhsla/
 
-USER root:root
+USER nhsla:nhsla
 ENTRYPOINT ["/nhsla/scripts/entrypoint.sh"]
