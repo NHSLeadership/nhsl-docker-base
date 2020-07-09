@@ -6,7 +6,7 @@ mkdir -p /tmp/openresty
 # Copy configs from RO directory to writable one (when using K8s)
 cp /setup/* /nhsla/config/
 # Configure during runtime
-source /setup/setup.sh
+source /setup/scripts/setup.sh
 
 if [ -f /nhsla/scripts/startup-all.sh ]; then
     source /nhsla/scripts/startup-all.sh

@@ -44,7 +44,6 @@ OpenResty site configuration: `/nhsla/config/site.conf`
 
 PHP-FPM:
 PHP-FPM php.ini: `/nhsla/config/php.ini`
-PHP-FPM config: `/nhsla/config/php-fpm.conf`
 PHP-FPM www pool: `/nhsla/config/www.conf`
 
 ## Environment Variables

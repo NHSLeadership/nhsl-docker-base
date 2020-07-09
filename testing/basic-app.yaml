@@ -9,14 +9,16 @@ spec:
   volumes:
     - name: shared-app
       emptyDir: {}
-    - name: run
+    - name: nhsla-openresty
+      emptyDir: {}
+    - name: nhsla-phpfpm
       emptyDir: {}
     - name: tmp-openresty
       emptyDir: {}
     - name: tmp-phpfpm
       emptyDir: {}
   containers:
-  - image: test-nginx:0.3
+  - image: openresty2:0.3
     name: nginx
     resources: {}
     securityContext:
@@ -25,8 +27,8 @@ spec:
     volumeMounts:
       - name: shared-app
         mountPath: /app-shared
-      - name: run
-        mountPath: /nhsla/run
+      - name: nhsla-openresty
+        mountPath: /nhsla
       - name: tmp-openresty
         mountPath: /tmp
     imagePullPolicy: Never
@@ -56,8 +58,8 @@ spec:
     volumeMounts:
       - name: shared-app
         mountPath: /app-shared
-      - name: run
-        mountPath: /nhsla/run
+      - name: nhsla-phpfpm
+        mountPath: /nhsla
       - name: tmp-phpfpm
         mountPath: /tmp
   dnsPolicy: ClusterFirst
