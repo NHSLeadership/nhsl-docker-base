@@ -9,8 +9,9 @@ COPY --chown=1000:1000 setup /setup
 RUN apt-get update \
   && apt-get install \
     ca-certificates \
-    gnupg \
     curl \
+    gnupg \
+    ssh \
     --no-install-recommends -y \
   && curl -L https://openresty.org/package/pubkey.gpg | apt-key add - \
   && echo "deb http://openresty.org/package/ubuntu focal main" \

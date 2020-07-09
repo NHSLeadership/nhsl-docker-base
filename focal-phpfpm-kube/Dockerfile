@@ -15,11 +15,15 @@ RUN apt-get update \
   && apt-get install \
     busybox-static \
     ca-certificates \
+    curl \
     gnupg \
+    gpg-agent \
     libfcgi-bin \
     nano \
+    ssh \
     ssmtp \
-    curl \
+    unzip \
+    zip \
     --no-install-recommends -y \
   && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 4F4EA0AAE5267A6C \
   && echo "deb http://ppa.launchpad.net/ondrej/php/ubuntu focal main" \
