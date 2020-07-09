@@ -26,7 +26,7 @@ if [ ! -z "$AWS_HOST_ENVIRONMENT" ]; then
 fi
 
 # Start the service
-if [ "$ROLE" == "cron" || "$ROLE" == "CRON" ]; then
+if [ "$ROLE" == "cron" ] || [ "$ROLE" == "CRON" ]; then
     exec /usr/local/bin/supercronic -split-logs /nhsla/cron 1>/dev/stdout
 else
     exec /usr/sbin/php-fpm${PHP_VERSION} -F --fpm-config /etc/php/${PHP_VERSION}/fpm/php-fpm.conf
