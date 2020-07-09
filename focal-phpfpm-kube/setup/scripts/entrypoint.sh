@@ -1,22 +1,21 @@
 #!/bin/bash
 # Create directories if they don't exist otherwise container wont run.
-[[ -d /nhsla/config ]] || mkdir -p /nhsla/config
-[[ -d /nhsla/run ]] || mkdir -p /nhsla/run
+[[ -d /nhsla/etc ]] || mkdir -p /nhsla/etc
 # Copy configs from RO directory to writable one (when using K8s)
-cp /setup/config/* /nhsla/config/
+cp /setup/config/* /nhsla/etc/
 # Configure during runtime
 source /setup/setup.sh
 
-if [ -f /setup/scripts/startup-all.sh ]; then
-    source /setup/scripts/startup-all.sh
+if [ -f /nhsla/startup-all.sh ]; then
+    source /nhsla/startup-all.sh
 fi
 
-if [ -f /setup/scripts/startup-php.sh ]; then
-    source /setup/scripts/startup-php.sh
+if [ -f /nhsla/startup-php.sh ]; then
+    source /nhsla/startup-php.sh
 fi
 
-if [ [ -f /setup/scripts/startup-cron.sh ] && [ "$ROLE" == "cron" || "$ROLE" == "CRON" ] ]; then
-    source /setup/scripts/startup-cron.sh
+if [ [ -f /nhsla/startup-cron.sh ] && [ "$ROLE" == "cron" || "$ROLE" == "CRON" ] ]; then
+    source /nhsla/startup-cron.sh
 fi
 
 

@@ -84,6 +84,8 @@ RUN apt-get update \
   && useradd --create-home --shell /bin/bash --uid 1000 nhsla \
   && mkdir -p /app/public \
   && chown -R nhsla:nhsla /app \
+  && mkdir -p /nhsla \
+  && chown -R nhsla:nhsla /nhsla \
   && chmod 755 /setup/scripts/entrypoint.sh \
   && sed -i -e 's|variables_order = "GPCS"|variables_order = "EGPCS"|g' /etc/php/${PHP_VERSION}/fpm/php.ini \
   && sed -i -e 's|variables_order = "GPCS"|variables_order = "EGPCS"|g' /etc/php/${PHP_VERSION}/cli/php.ini \
@@ -95,16 +97,16 @@ RUN apt-get update \
   && sed -i -e "s|error_log =.*|error_log = \/dev\/stderr|" /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \
   && sed -i -e "s|;daemonize\s*=\s*yes|daemonize = no|g" /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \
   && sed -i "s|;catch_workers_output = .*|catch_workers_output = yes|" /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
-  && sed -i -e "s|pid =.*|pid = \/nhsla\/run\/php-fpm.pid|" /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \
+  && sed -i -e "s|pid =.*|pid = \/nhsla\/etc\/php-fpm.pid|" /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \
    && sed -i -e 's|;log_level = notice|log_level = warning|g' /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \
   && rm -rf /etc/php/${PHP_VERSION}/fpm/php.ini \
   && rm -rf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
   && rm -rf /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini \
-  && ln -s /nhsla/config/php.ini /etc/php/${PHP_VERSION}/fpm/php.ini \
-  && ln -s /nhsla/config/www.conf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
-  && ln -s /nhsla/config/atatus.ini /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini \
+  && ln -s /nhsla/etc/php.ini /etc/php/${PHP_VERSION}/fpm/php.ini \
+  && ln -s /nhsla/etc/www.conf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
+  && ln -s /nhsla/etc/atatus.ini /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini \
   && rm -rf /etc/ssmtp/ssmtp.conf \
-  && ln -s /nhsla/config/ssmtp.conf /etc/ssmtp/ssmtp.conf \
+  && ln -s /nhsla/etc/ssmtp.conf /etc/ssmtp/ssmtp.conf \
   && chmod +x /setup/scripts/setup.sh \
   && curl -fsSLO "$SUPERCRONIC_URL" \
   && echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - \
