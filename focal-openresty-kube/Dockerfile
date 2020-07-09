@@ -11,7 +11,6 @@ RUN apt-get update \
     ca-certificates \
     curl \
     gnupg \
-    ssh \
     --no-install-recommends -y \
   && curl -L https://openresty.org/package/pubkey.gpg | apt-key add - \
   && echo "deb http://openresty.org/package/ubuntu focal main" \
@@ -34,8 +33,8 @@ RUN apt-get update \
   && ln -sf /dev/stderr /usr/local/openresty/nginx/logs/error.log
 
 COPY error_pages/* /usr/local/openresty/nginx/html/
-COPY setup/nginx.conf /etc/openresty/nginx.conf
-COPY setup/site.conf /etc/openresty/site.conf
+COPY setup/config/nginx.conf /etc/openresty/nginx.conf
+COPY setup/config/site.conf /etc/openresty/site.conf
 
 USER 1000:1000
 ENTRYPOINT ["/setup/scripts/entrypoint.sh"]
