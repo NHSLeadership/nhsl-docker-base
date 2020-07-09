@@ -24,6 +24,7 @@ RUN apt-get update \
   && useradd --create-home --shell /bin/bash --uid 1000 nhsla \
   && chown -R nhsla:nhsla /usr/local/openresty \
   && chown -R nhsla:nhsla /etc/openresty \
+  && chmod a+r /usr/local/openresty/nginx/conf/nginx.conf && \
   && mkdir -p /app/public \
   && mkdir -p /nhsla \
   && chown -R nhsla:nhsla /nhsla \
