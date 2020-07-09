@@ -34,9 +34,9 @@ RUN apt-get update \
   && ln -sf /dev/stderr /usr/local/openresty/nginx/logs/error.log
 
 COPY error_pages/* /usr/local/openresty/nginx/html/
-COPY conf/nginx.conf /etc/openresty/nginx.conf
-COPY conf/site.conf /etc/openresty/site.conf
+COPY setup/nginx.conf /etc/openresty/nginx.conf
+COPY setup/site.conf /etc/openresty/site.conf
 
-USER 1000:1000
+USER nhsla:nhsla
 ENTRYPOINT ["/nhsla/scripts/entrypoint.sh"]
 CMD ["/usr/local/openresty/bin/openresty"]

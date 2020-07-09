@@ -36,6 +36,17 @@ We ship a basic configuration for both PHP-FPM and OpenResty which should work f
 
 We no longer use a long list of runtime variables to do this - instead we simply overwrite the configuration using Kubernetes ConfigMaps which also allows us to work around the readOnlyRootFilesystem easily whilst keeping application specific configurations in their relevant Git repositories.
 
+You may wish to override the following configuration files with ConfigMaps or a layered image build:
+
+OpenResty:
+Base OpenResty (Nginx compatible): `/nhsla/config/nginx.conf`
+OpenResty site configuration: `/nhsla/config/site.conf`
+
+PHP-FPM:
+PHP-FPM php.ini: `/nhsla/config/php.ini`
+PHP-FPM config: `/nhsla/config/php-fpm.conf`
+PHP-FPM www pool: `/nhsla/config/www.conf`
+
 ## Environment Variables
 
 |Variable      |Description      |Default      |Image      |      |
