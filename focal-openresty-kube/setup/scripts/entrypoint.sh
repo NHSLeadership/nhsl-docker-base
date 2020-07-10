@@ -3,7 +3,7 @@
 [[ -d /nhsla/etc ]] || mkdir -p /nhsla/etc
 mkdir -p /tmp/openresty
 # Copy configs from RO directory to writable one (when using K8s)
-cp -r /setup/* /nhsla/etc/
+#cp /setup/config/* /nhsla/etc/
 # Configure during runtime
 source /setup/scripts/setup.sh
 

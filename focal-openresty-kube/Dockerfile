@@ -39,4 +39,4 @@ COPY setup/config/site.conf /etc/openresty/site.conf
 
 USER 1000:1000
 ENTRYPOINT ["/setup/scripts/entrypoint.sh"]
-CMD ["/usr/local/openresty/bin/openresty"]
+CMD ["/usr/local/openresty/bin/openresty", "-c", "/etc/openresty/nginx.conf"]
