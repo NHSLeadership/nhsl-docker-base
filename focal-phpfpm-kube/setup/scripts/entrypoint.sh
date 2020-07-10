@@ -21,12 +21,12 @@ fi
 
 # Move application into shared storage if AWS_HOST_ENVIRONMENT is set
 #    it's likely we're running in our kube environment in this case.
-if [ ! -z "$AWS_HOST_ENVIRONMENT" ]; then
+if [ ! -z "$AWS_HOST_ENVIRONMENT" ] && [ "$ROLE" != "CRON" ]; then
   cp -rp /app/. /app-shared/
 fi
 
 # Start the service
-if [ "$ROLE" == "cron" ] || [ "$ROLE" == "CRON" ]; then
+if [ "$ROLE" == "CRON" ]; then
     exec /usr/local/bin/supercronic -split-logs /nhsla/cron 1>/dev/stdout
 else
     exec /usr/sbin/php-fpm${PHP_VERSION} -F --fpm-config /etc/php/${PHP_VERSION}/fpm/php-fpm.conf
