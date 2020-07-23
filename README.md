@@ -16,6 +16,10 @@ In future it would be nice to split PHP-FPM and OpenResty into separately scalab
 
 This README will assume Kubernetes for context and so may make references to Kubernetes terminology such as jobs, pods etc.
 
+## Assumptions
+
+PHP expects Redis to be available at tcp://redis:6379 for session storage.
+
 ## Cron
 
 We try to run cron jobs within Kubernetes it self but it doesn't handle things well when you need to run jobs reliably every minute - in these instances we run a single PHP-FPM pod in "cron" mode.
