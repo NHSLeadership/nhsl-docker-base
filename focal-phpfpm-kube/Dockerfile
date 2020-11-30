@@ -16,6 +16,7 @@ RUN apt-get update \
     busybox-static \
     ca-certificates \
     curl \
+    git \
     gnupg \
     gpg-agent \
     libfcgi-bin \
