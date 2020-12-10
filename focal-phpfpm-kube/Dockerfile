@@ -56,7 +56,6 @@ RUN apt-get update \
     php${PHP_VERSION}-phar \
     php${PHP_VERSION}-sockets \
     php${PHP_VERSION}-tidy \
-    php${PHP_VERSION}-wddx \
     php${PHP_VERSION}-xmlreader \
     php${PHP_VERSION}-xsl \
     php${PHP_VERSION}-opcache \
