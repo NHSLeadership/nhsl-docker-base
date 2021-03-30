@@ -34,7 +34,7 @@ spec:
     - containerPort: 8080
       name: http
       protocol: TCP
-  - image: test-php:0.3
+  - image: test-phpexport:0.1
     name: phpfpm
     resources: {}
     imagePullPolicy: Never
@@ -60,6 +60,11 @@ spec:
         mountPath: /nhsla/etc
       - name: tmp-phpfpm
         mountPath: /tmp
+  - image: hipages/php-fpm_exporter:latest
+    name: phpfpm-metrics
+    resources: {}
+    imagePullPolicy: Always
+    #liveness and readiness probes http check metrics are up
   dnsPolicy: ClusterFirst
   restartPolicy: Always
 status: {}
@@ -68,13 +73,29 @@ apiVersion: v1
 kind: Service
 metadata:
   name: 'nginx'
-  namespace: default
+  namespace: test1
 spec:
   ports:
   - name: openresty
     port: 80
     protocol: TCP
     targetPort: 8080
+  selector:
+    app: 'test-app'
+  sessionAffinity: None
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: 'phpmetrics'
+  namespace: test1
+spec:
+  ports:
+  - name: phpmetrics
+    port: 9253
+    protocol: TCP
+    targetPort: 9253
   selector:
     app: 'test-app'
   sessionAffinity: None
