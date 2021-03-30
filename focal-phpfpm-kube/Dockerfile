@@ -19,6 +19,7 @@ RUN apt-get update \
     git \
     gnupg \
     gpg-agent \
+    less \
     libfcgi-bin \
     nano \
     ssh \
