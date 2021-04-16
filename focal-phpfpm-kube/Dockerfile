@@ -103,9 +103,11 @@ RUN apt-get update \
   && rm -rf /etc/php/${PHP_VERSION}/fpm/php.ini \
   && rm -rf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
   && rm -rf /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini \
+  && rm -rf /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini \
   && ln -s /nhsla/etc/php.ini /etc/php/${PHP_VERSION}/fpm/php.ini \
   && ln -s /nhsla/etc/www.conf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
   && ln -s /nhsla/etc/atatus.ini /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini \
+  && ln -s /nhsla/etc/atatus.ini /etc/php/${PHP_VERSION}/cli/conf.d/20-atatus.ini \
   && rm -rf /etc/ssmtp/ssmtp.conf \
   && ln -s /nhsla/etc/ssmtp.conf /etc/ssmtp/ssmtp.conf \
   && chmod +x /setup/scripts/setup.sh \
