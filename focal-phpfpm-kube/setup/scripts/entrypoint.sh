@@ -21,7 +21,7 @@ fi
 
 # Move application into shared storage if AWS_HOST_ENVIRONMENT is set
 #    it's likely we're running in our kube environment in this case.
-if [ ! -z "$AWS_HOST_ENVIRONMENT" ] && [ "$ROLE" != "CRON" ]; then
+if [ ! -z "$AWS_HOST_ENVIRONMENT" ]; then
   cp -rp /app/. /app-shared/
 fi
 
