@@ -6,6 +6,12 @@ cp /setup/config/* /nhsla/etc/
 # Configure during runtime
 source /setup/scripts/setup.sh
 
+# Move application into shared storage if AWS_HOST_ENVIRONMENT is set
+#    it's likely we're running in our kube environment in this case.
+if [ ! -z "$AWS_HOST_ENVIRONMENT" ]; then
+  cp -rp /app/. /app-shared/
+fi
+
 if [ -f /nhsla/startup-all.sh ]; then
     source /nhsla/startup-all.sh
 fi
@@ -16,13 +22,6 @@ fi
 
 if { [ -f /nhsla/startup-cron.sh ] ; } && { [ "$ROLE" == "cron" ] || [ "$ROLE" == "CRON" ] ; } ; then
     source /nhsla/startup-cron.sh
-fi
-
-
-# Move application into shared storage if AWS_HOST_ENVIRONMENT is set
-#    it's likely we're running in our kube environment in this case.
-if [ ! -z "$AWS_HOST_ENVIRONMENT" ]; then
-  cp -rp /app/. /app-shared/
 fi
 
 # Start the service
