@@ -1,4 +1,4 @@
-FROM ubuntu:focal
+FROM ubuntu:20.10
 LABEL maintainer="devops@nhsx.uk"
 
 ARG PHP_VERSION
