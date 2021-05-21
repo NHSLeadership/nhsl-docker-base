@@ -1,19 +1,20 @@
-FROM ubuntu:focal
+FROM debian:buster-slim
 LABEL maintainer="devops@nhsx.uk"
-
 ARG PHP_VERSION
 ARG DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.1.9/supercronic-linux-amd64 \
+
+ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.1.12/supercronic-linux-amd64 \
     SUPERCRONIC=supercronic-linux-amd64 \
-    SUPERCRONIC_SHA1SUM=5ddf8ea26b56d4a7ff6faecdd8966610d5cb9d85 \
+    SUPERCRONIC_SHA1SUM=048b95b48b708983effb2e5c935a1ef8483d9e3e \
     PHP_VERSION=$PHP_VERSION
 
-COPY --chown=1000:1000 setup /setup
+COPY --chown=1000:1000 overlay /
 
 RUN apt-get update \
-  && apt-get install \
-    busybox-static \
+  && apt-get install --no-install-recommends \
+    -o Dpkg::Options::=--force-confdef -y \
+    tini
     ca-certificates \
     curl \
     git \
@@ -26,7 +27,6 @@ RUN apt-get update \
     ssmtp \
     unzip \
     zip \
-    --no-install-recommends -y \
   && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 4F4EA0AAE5267A6C \
   && echo "deb http://ppa.launchpad.net/ondrej/php/ubuntu focal main" \
     | tee /etc/apt/sources.list.d/ondrej.list \
@@ -82,12 +82,11 @@ RUN apt-get update \
   && apt-get autoremove -y \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-  && useradd --create-home --shell /bin/bash --uid 1000 nhsla \
+  && groupadd -g 1000 nhsla \
+  && useradd -g 1000 -l -M -s /bin/false -u 1000 nhsla \
   && mkdir -p /app/public \
   && chown -R nhsla:nhsla /app \
-  && mkdir -p /nhsla \
-  && chown -R nhsla:nhsla /nhsla \
-  && chmod 755 /setup/scripts/entrypoint.sh \
+  && chmod +x /entrypoint.sh \
   && sed -i -e 's|variables_order = "GPCS"|variables_order = "EGPCS"|g' /etc/php/${PHP_VERSION}/fpm/php.ini \
   && sed -i -e 's|variables_order = "GPCS"|variables_order = "EGPCS"|g' /etc/php/${PHP_VERSION}/cli/php.ini \
   && sed -i -e 's|;clear_env = no|clear_env = no|g' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
@@ -99,7 +98,7 @@ RUN apt-get update \
   && sed -i -e "s|;daemonize\s*=\s*yes|daemonize = no|g" /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \
   && sed -i "s|;catch_workers_output = .*|catch_workers_output = yes|" /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
   && sed -i -e "s|pid =.*|pid = \/nhsla\/etc\/php-fpm.pid|" /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \
-   && sed -i -e 's|;log_level = notice|log_level = warning|g' /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \
+  && sed -i -e 's|;log_level = notice|log_level = warning|g' /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \
   && rm -rf /etc/php/${PHP_VERSION}/fpm/php.ini \
   && rm -rf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
   && rm -rf /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini \
@@ -119,4 +118,4 @@ RUN apt-get update \
   && date > /image_base_build_date
 
 USER 1000:1000
-ENTRYPOINT ["/setup/scripts/entrypoint.sh"]
+ENTRYPOINT ["/usr/bin/tini", "--", "/entrypoint.sh"]
