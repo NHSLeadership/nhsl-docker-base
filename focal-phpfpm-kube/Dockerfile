@@ -1,4 +1,4 @@
-FROM ubuntu:focal
+FROM ubuntu:groovy-20210416
 LABEL maintainer="devops@nhsx.uk"
 
 ARG PHP_VERSION
