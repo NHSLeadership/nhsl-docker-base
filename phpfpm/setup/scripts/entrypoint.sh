@@ -26,7 +26,7 @@ fi
 
 # Start the service
 if [ "$ROLE" == "CRON" ]; then
-    exec /usr/local/bin/supercronic -split-logs /nhsla/cron 1>/dev/stdout
+    exec /usr/local/bin/supercronic -debug -overlapping -split-logs /nhsla/cron 1>/dev/stdout
 else
     exec /usr/sbin/php-fpm${PHP_VERSION} -F --fpm-config /etc/php/${PHP_VERSION}/fpm/php-fpm.conf
 fi
