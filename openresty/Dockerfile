@@ -3,20 +3,22 @@ LABEL maintainer="devops@nhsx.uk"
 
 ARG DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
-COPY --chown=1000:1000 setup /setup
+ENV S6_READ_ONLY_ROOT=1 \
+    S6_KEEP_ENV=1 \
+    S6_LOGGING=0
 
 RUN apt-get update \
   && apt-get install \
-    ca-certificates \
-    curl \
-    gnupg \
-    tini \
-    dumb-init \
-    --no-install-recommends -y \
+     ca-certificates \
+     curl \
+     gnupg \
+     --no-install-recommends -y \
+  && curl -L https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.1/s6-overlay-amd64-installer --output /tmp/s6-overlay-amd64-installer \
+  && chmod +x /tmp/s6-overlay-amd64-installer && /tmp/s6-overlay-amd64-installer / \
+  && rm -rf /tmp/* \
   && curl -L https://openresty.org/package/pubkey.gpg | apt-key add - \
   && echo "deb http://openresty.org/package/ubuntu focal main" \
-    | tee /etc/apt/sources.list.d/openresty.list \
+     | tee /etc/apt/sources.list.d/openresty.list \
   && apt-get update \
   && apt-get install -y --no-install-recommends openresty openresty-opm \
   && apt-get remove -y --purge curl gnupg \
@@ -31,14 +33,12 @@ RUN apt-get update \
   && mkdir -p /nhsla \
   && chown -R nhsla:nhsla /nhsla \
   && chown -R nhsla:nhsla /app \
-  && chmod 755 /setup/scripts/entrypoint.sh \
   && ln -sf /dev/stdout /usr/local/openresty/nginx/logs/access.log \
   && ln -sf /dev/stderr /usr/local/openresty/nginx/logs/error.log
 
-COPY --chown=nhsla:nhsla error_pages/* /usr/local/openresty/nginx/html/
-COPY --chown=nhsla:nhsla setup/config/nginx.conf /etc/openresty/nginx.conf
-COPY --chown=nhsla:nhsla setup/config/site.conf /etc/openresty/site.conf
+COPY --chown=1000:1000 /root/ /
 
 USER 1000:1000
+
+ENTRYPOINT ["/init"]
 CMD ["/usr/local/openresty/bin/openresty", "-c", "/etc/openresty/nginx.conf"]
-ENTRYPOINT ["/usr/bin/tini", "--", "/setup/scripts/entrypoint.sh"]
