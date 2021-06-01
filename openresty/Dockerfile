@@ -12,6 +12,7 @@ RUN apt-get update \
     curl \
     gnupg \
     tini \
+    dumb-init \
     --no-install-recommends -y \
   && curl -L https://openresty.org/package/pubkey.gpg | apt-key add - \
   && echo "deb http://openresty.org/package/ubuntu focal main" \

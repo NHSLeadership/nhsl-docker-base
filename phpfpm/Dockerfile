@@ -25,6 +25,7 @@ RUN apt-get update \
     ssh \
     ssmtp \
     tini \
+    dumb-init \
     unzip \
     zip \
     --no-install-recommends -y \
@@ -120,4 +121,5 @@ RUN apt-get update \
   && date > /image_base_build_date
 
 USER 1000:1000
-ENTRYPOINT ["/usr/bin/tini", "--", "/setup/scripts/entrypoint.sh"]
+#ENTRYPOINT ["/usr/bin/tini", "--", "/setup/scripts/entrypoint.sh"]
+ENRTYPOINT ["/usr/bin/dumb-init", "--", "/setup/scripts/entrypoint.sh"]
