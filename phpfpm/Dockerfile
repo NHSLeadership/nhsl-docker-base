@@ -122,4 +122,4 @@ RUN apt-get update \
 
 USER 1000:1000
 #ENTRYPOINT ["/usr/bin/tini", "--", "/setup/scripts/entrypoint.sh"]
-ENRTYPOINT ["/usr/bin/dumb-init", "--", "/setup/scripts/entrypoint.sh"]
+ENTRYPOINT ["/usr/bin/dumb-init", "--", "/setup/scripts/entrypoint.sh"]
