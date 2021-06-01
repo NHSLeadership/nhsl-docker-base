@@ -11,6 +11,7 @@ RUN apt-get update \
     ca-certificates \
     curl \
     gnupg \
+    tini \
     --no-install-recommends -y \
   && curl -L https://openresty.org/package/pubkey.gpg | apt-key add - \
   && echo "deb http://openresty.org/package/ubuntu focal main" \
@@ -38,5 +39,5 @@ COPY --chown=nhsla:nhsla setup/config/nginx.conf /etc/openresty/nginx.conf
 COPY --chown=nhsla:nhsla setup/config/site.conf /etc/openresty/site.conf
 
 USER 1000:1000
-ENTRYPOINT ["/setup/scripts/entrypoint.sh"]
 CMD ["/usr/local/openresty/bin/openresty", "-c", "/etc/openresty/nginx.conf"]
+ENTRYPOINT ["/usr/bin/tini", "--", "/setup/scripts/entrypoint.sh"]
