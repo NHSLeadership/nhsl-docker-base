@@ -1,4 +1,4 @@
-FROM ubuntu:focal
+FROM ubuntu:groovy
 LABEL maintainer="devops@nhsx.uk"
 
 ARG PHP_VERSION
@@ -6,7 +6,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.1.12/supercronic-linux-amd64 \
     SUPERCRONIC=supercronic-linux-amd64 \
-    SUPERCRONIC_SHA1SUM=048b95b48b708983effb2e5c935a1ef8483d9e3e
+    SUPERCRONIC_SHA1SUM=048b95b48b708983effb2e5c935a1ef8483d9e3e \
     PHP_VERSION=$PHP_VERSION
 
 COPY --chown=1000:1000 setup /setup
@@ -29,7 +29,7 @@ RUN apt-get update \
     zip \
     --no-install-recommends -y \
   && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 4F4EA0AAE5267A6C \
-  && echo "deb http://ppa.launchpad.net/ondrej/php/ubuntu focal main" \
+  && echo "deb http://ppa.launchpad.net/ondrej/php/ubuntu groovy main" \
     | tee /etc/apt/sources.list.d/ondrej.list \
   && apt-get update \
   && apt-get install -y --no-install-recommends \
