@@ -24,6 +24,7 @@ RUN apt-get update \
     nano \
     ssh \
     ssmtp \
+    tini \
     unzip \
     zip \
     --no-install-recommends -y \
@@ -119,4 +120,4 @@ RUN apt-get update \
   && date > /image_base_build_date
 
 USER 1000:1000
-ENTRYPOINT ["/setup/scripts/entrypoint.sh"]
+ENTRYPOINT ["/usr/bin/tini", "--", "/setup/scripts/entrypoint.sh"]
