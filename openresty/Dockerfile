@@ -36,7 +36,7 @@ RUN apt-get update \
   && ln -sf /dev/stdout /usr/local/openresty/nginx/logs/access.log \
   && ln -sf /dev/stderr /usr/local/openresty/nginx/logs/error.log
 
-COPY --chown=1000:1000 /root/ /
+COPY --chown=1000:1000 /rootfs/ /
 
 USER 1000:1000
 

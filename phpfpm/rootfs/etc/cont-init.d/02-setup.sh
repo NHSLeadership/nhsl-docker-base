@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/with-contenv bash
 
 #####
 # Email relay configuration
@@ -27,11 +27,11 @@ if [ ! -z "$ATATUS_APM_LICENSE_KEY" ]; then
   sed -i -e "s/atatus.app_name = \"PHP App\"/atatus.app_name = \"$SITE_NAME\"/g" /nhsla/etc/atatus.ini
   sed -i -e "s/atatus.app_version = \"\"/atatus.app_version = \"$SITE_BRANCH-$BUILD\"/g" /nhsla/etc/atatus.ini
   sed -i -e "s/atatus.tags = \"\"/atatus.tags = \"$SITE_BRANCH-$BUILD, $SITE_BRANCH\"/g" /nhsla/etc/atatus.ini
-  printf " %-30s %-30s\n" "Atatus:" "Enabled"
+  #printf " %-30s %-30s\n" "Atatus:" "Enabled"
 else
   # Atatus - if api key is not set then disable
   sed -i -e "s|atatus.enabled = true|atatus.enabled = false|g" /nhsla/etc/atatus.ini
-  printf " %-30s %-30s\n" "Atatus: " "Disabled"
+  #printf " %-30s %-30s\n" "Atatus: " "Disabled"
   rm -f /nhsla/etc/atatus.ini
 fi
 #####
@@ -43,3 +43,6 @@ if [ "$ENVIRONMENT" != "production" ]; then
   sed -i "s|display_errors = Off|display_errors = On|" /nhsla/etc/php.ini
 fi
 #####
+
+# This isn't an S6 service because it spawns children that get lost, and it isn't exactly critical
+exec /usr/bin/atatus-php-collector --conn /tmp/.atatus.sock --log-file /dev/stdout --log-level warning --pidfile /nhsla/etc/atatus.pid > /dev/null 2>&1

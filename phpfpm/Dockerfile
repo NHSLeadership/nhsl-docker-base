@@ -7,9 +7,12 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.1.12/supercronic-linux-amd64 \
     SUPERCRONIC=supercronic-linux-amd64 \
     SUPERCRONIC_SHA1SUM=048b95b48b708983effb2e5c935a1ef8483d9e3e \
+    S6OVERLAY_URL=https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.1/s6-overlay-amd64-installer \
+    S6_FIX_ATTRS_HIDDEN=1 \
+    S6_READ_ONLY_ROOT=1 \
+    S6_KEEP_ENV=1 \
+    S6_LOGGING=0 \
     PHP_VERSION=$PHP_VERSION
-
-COPY --chown=1000:1000 setup /setup
 
 RUN apt-get update \
   && apt-get install \
@@ -24,11 +27,12 @@ RUN apt-get update \
     nano \
     ssh \
     ssmtp \
-    tini \
-    dumb-init \
     unzip \
     zip \
     --no-install-recommends -y \
+  && curl -L "$S6OVERLAY_URL" --output /tmp/s6-overlay-amd64-installer \
+  && chmod +x /tmp/s6-overlay-amd64-installer && /tmp/s6-overlay-amd64-installer / \
+  && rm -rf /tmp/* \
   && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 4F4EA0AAE5267A6C \
   && echo "deb http://ppa.launchpad.net/ondrej/php/ubuntu groovy main" \
     | tee /etc/apt/sources.list.d/ondrej.list \
@@ -89,7 +93,6 @@ RUN apt-get update \
   && chown -R nhsla:nhsla /app \
   && mkdir -p /nhsla \
   && chown -R nhsla:nhsla /nhsla \
-  && chmod 755 /setup/scripts/entrypoint.sh \
   && sed -i -e 's|variables_order = "GPCS"|variables_order = "EGPCS"|g' /etc/php/${PHP_VERSION}/fpm/php.ini \
   && sed -i -e 's|variables_order = "GPCS"|variables_order = "EGPCS"|g' /etc/php/${PHP_VERSION}/cli/php.ini \
   && sed -i -e 's|;clear_env = no|clear_env = no|g' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
@@ -112,7 +115,6 @@ RUN apt-get update \
   && ln -s /nhsla/etc/atatus.ini /etc/php/${PHP_VERSION}/cli/conf.d/20-atatus.ini \
   && rm -rf /etc/ssmtp/ssmtp.conf \
   && ln -s /nhsla/etc/ssmtp.conf /etc/ssmtp/ssmtp.conf \
-  && chmod +x /setup/scripts/setup.sh \
   && curl -fsSLO "$SUPERCRONIC_URL" \
   && echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - \
   && chmod +x "$SUPERCRONIC" \
@@ -120,6 +122,9 @@ RUN apt-get update \
   && ln -s "/usr/local/bin/${SUPERCRONIC}" /usr/local/bin/supercronic \
   && date > /image_base_build_date
 
+
+COPY --chown=1000:1000 /rootfs/ /
+
 USER 1000:1000
-#ENTRYPOINT ["/usr/bin/tini", "--", "/setup/scripts/entrypoint.sh"]
-ENTRYPOINT ["/usr/bin/dumb-init", "--", "/setup/scripts/entrypoint.sh"]
+
+ENTRYPOINT ["/init"]

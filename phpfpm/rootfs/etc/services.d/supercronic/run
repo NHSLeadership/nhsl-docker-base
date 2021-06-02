@@ -1,0 +1,6 @@
+#!/usr/bin/with-contenv bash
+
+if [ "$ROLE" == "CRON" ]; then
+   /usr/local/bin/supercronic -overlapping -split-logs /nhsla/cron 1>/dev/stdout
+fi
+
