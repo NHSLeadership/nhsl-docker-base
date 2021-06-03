@@ -1,4 +1,4 @@
-FROM ubuntu:groovy
+FROM ubuntu:focal
 LABEL maintainer="devops@nhsx.uk"
 
 ARG PHP_VERSION
@@ -22,6 +22,7 @@ RUN apt-get update \
     git \
     gnupg \
     gpg-agent \
+    ldap-utils \
     less \
     libfcgi-bin \
     nano \
@@ -34,7 +35,7 @@ RUN apt-get update \
   && chmod +x /tmp/s6-overlay-amd64-installer && /tmp/s6-overlay-amd64-installer / \
   && rm -rf /tmp/* \
   && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 4F4EA0AAE5267A6C \
-  && echo "deb http://ppa.launchpad.net/ondrej/php/ubuntu groovy main" \
+  && echo "deb http://ppa.launchpad.net/ondrej/php/ubuntu focal main" \
     | tee /etc/apt/sources.list.d/ondrej.list \
   && apt-get update \
   && apt-get install -y --no-install-recommends \

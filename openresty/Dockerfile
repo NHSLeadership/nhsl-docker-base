@@ -1,4 +1,4 @@
-FROM ubuntu:groovy
+FROM ubuntu:focal
 LABEL maintainer="devops@nhsx.uk"
 
 ARG DEBIAN_FRONTEND=noninteractive
