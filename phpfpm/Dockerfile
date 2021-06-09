@@ -19,14 +19,13 @@ RUN apt-get update \
     busybox-static \
     ca-certificates \
     curl \
+    ghostscript \
     git \
     gnupg \
     gpg-agent \
-    ldap-utils \
-    less \
     libfcgi-bin \
     nano \
-    ssh \
+    openssh-client \
     ssmtp \
     unzip \
     zip \
