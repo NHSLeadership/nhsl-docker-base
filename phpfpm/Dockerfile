@@ -41,6 +41,8 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends \
     php${PHP_VERSION}-fpm \
     php${PHP_VERSION}-cli \
+    php${PHP_VERSION}-apcu \
+    php${PHP_VERSION}-apcu-bc \
     php${PHP_VERSION}-mysql \
     php${PHP_VERSION}-mysqli \
     php${PHP_VERSION}-memcached \
