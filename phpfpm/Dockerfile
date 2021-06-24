@@ -74,6 +74,7 @@ RUN apt-get update \
     php${PHP_VERSION}-sqlite3 \
     php${PHP_VERSION}-intl \
     php${PHP_VERSION}-redis \
+    php${PHP_VERSION}-pgsql \
   ## Add PHP-FPM Health check script
   && curl https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck --output /usr/local/bin/php-fpm-healthcheck \
   && chmod +x /usr/local/bin/php-fpm-healthcheck \
