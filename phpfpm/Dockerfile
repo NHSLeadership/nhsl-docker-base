@@ -4,7 +4,8 @@ LABEL maintainer="devops@nhsx.uk"
 ARG PHP_VERSION
 ARG DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-ENV HEALTHCHECK_URL=https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck \
+ENV METRICS_URL=https://github.com/hipages/php-fpm_exporter/releases/download/v2.0.2/php-fpm_exporter_2.0.2_linux_amd64 \
+    HEALTHCHECK_URL=https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck \
     SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.1.12/supercronic-linux-amd64 \
     SUPERCRONIC=supercronic-linux-amd64 \
     SUPERCRONIC_SHA1SUM=048b95b48b708983effb2e5c935a1ef8483d9e3e \
@@ -76,6 +77,9 @@ RUN apt-get update \
     php${PHP_VERSION}-intl \
     php${PHP_VERSION}-redis \
     php${PHP_VERSION}-pgsql \
+  ## Adds in PHP-FPM Prometheus metrics scraper
+  && curl -L "$METRICS_URL" --output /usr/local/bin/php-fpm_exporter \
+  && chmod +x /usr/local/bin/php-fpm_exporter \
   ## Add PHP-FPM Health check script
   && curl "$HEALTHCHECK_URL" --output /usr/local/bin/php-fpm-healthcheck \
   && chmod +x /usr/local/bin/php-fpm-healthcheck \
