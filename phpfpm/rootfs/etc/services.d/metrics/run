@@ -1,0 +1,5 @@
+#!/usr/bin/with-contenv bash
+
+if [ ! "$ROLE" == "CRON" ]; then
+  /usr/local/bin/php-fpm_exporter server --phpfpm.fix-process-count --phpfpm.scrape-uri=tcp://127.0.0.1:9000/status
+fi

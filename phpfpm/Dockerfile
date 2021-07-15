@@ -4,10 +4,12 @@ LABEL maintainer="devops@nhsx.uk"
 ARG PHP_VERSION
 ARG DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.1.12/supercronic-linux-amd64 \
+ENV METRICS_URL=https://github.com/hipages/php-fpm_exporter/releases/download/v2.0.2/php-fpm_exporter_2.0.2_linux_amd64 \
+    HEALTHCHECK_URL=https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck \
+    SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.1.12/supercronic-linux-amd64 \
     SUPERCRONIC=supercronic-linux-amd64 \
     SUPERCRONIC_SHA1SUM=048b95b48b708983effb2e5c935a1ef8483d9e3e \
-    S6OVERLAY_URL=https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.1/s6-overlay-amd64-installer \
+    S6OVERLAY_URL=https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.3/s6-overlay-amd64-installer \
     S6_FIX_ATTRS_HIDDEN=1 \
     S6_READ_ONLY_ROOT=1 \
     S6_KEEP_ENV=1 \
@@ -75,8 +77,11 @@ RUN apt-get update \
     php${PHP_VERSION}-intl \
     php${PHP_VERSION}-redis \
     php${PHP_VERSION}-pgsql \
+  ## Adds in PHP-FPM Prometheus metrics scraper
+  && curl -L "$METRICS_URL" --output /usr/local/bin/php-fpm_exporter \
+  && chmod +x /usr/local/bin/php-fpm_exporter \
   ## Add PHP-FPM Health check script
-  && curl https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck --output /usr/local/bin/php-fpm-healthcheck \
+  && curl "$HEALTHCHECK_URL" --output /usr/local/bin/php-fpm-healthcheck \
   && chmod +x /usr/local/bin/php-fpm-healthcheck \
   ## Add global Composer
   && curl -sS https://getcomposer.org/installer | php \
