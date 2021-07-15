@@ -21,6 +21,8 @@ RUN apt-get update \
      | tee /etc/apt/sources.list.d/openresty.list \
   && apt-get update \
   && apt-get install -y --no-install-recommends openresty openresty-opm \
+  ## Install Prometheus metrics exporter
+  && opm get knyar/nginx-lua-prometheus \
   && apt-get remove -y --purge curl gnupg \
   && apt-get autoremove -y \
   && apt-get clean \
