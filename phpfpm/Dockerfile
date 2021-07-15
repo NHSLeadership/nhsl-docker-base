@@ -4,7 +4,8 @@ LABEL maintainer="devops@nhsx.uk"
 ARG PHP_VERSION
 ARG DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.1.12/supercronic-linux-amd64 \
+ENV HEALTHCHECK_URL=https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck \
+    SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.1.12/supercronic-linux-amd64 \
     SUPERCRONIC=supercronic-linux-amd64 \
     SUPERCRONIC_SHA1SUM=048b95b48b708983effb2e5c935a1ef8483d9e3e \
     S6OVERLAY_URL=https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.3/s6-overlay-amd64-installer \
@@ -76,7 +77,7 @@ RUN apt-get update \
     php${PHP_VERSION}-redis \
     php${PHP_VERSION}-pgsql \
   ## Add PHP-FPM Health check script
-  && curl https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck --output /usr/local/bin/php-fpm-healthcheck \
+  && curl "$HEALTHCHECK_URL" --output /usr/local/bin/php-fpm-healthcheck \
   && chmod +x /usr/local/bin/php-fpm-healthcheck \
   ## Add global Composer
   && curl -sS https://getcomposer.org/installer | php \
