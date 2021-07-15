@@ -13,7 +13,7 @@ RUN apt-get update \
      curl \
      gnupg \
      --no-install-recommends -y \
-  && curl -L https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.1/s6-overlay-amd64-installer --output /tmp/s6-overlay-amd64-installer \
+  && curl -L https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.3/s6-overlay-amd64-installer --output /tmp/s6-overlay-amd64-installer \
   && chmod +x /tmp/s6-overlay-amd64-installer && /tmp/s6-overlay-amd64-installer / \
   && rm -rf /tmp/* \
   && curl -L https://openresty.org/package/pubkey.gpg | apt-key add - \
