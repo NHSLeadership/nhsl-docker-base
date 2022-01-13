@@ -1,5 +1,5 @@
 #!/usr/bin/with-contenv bash
 
-if [ ! "$ROLE" == "CRON" ]; then
+if [ ! "$ROLE" == "CRON" ] || [ ! "$ROLE" == "WORKER" ]; then
   /usr/sbin/php-fpm${PHP_VERSION} -F --fpm-config /etc/php/${PHP_VERSION}/fpm/php-fpm.conf
 fi
