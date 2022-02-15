@@ -2,7 +2,9 @@ FROM ubuntu:focal
 LABEL maintainer="devops@nhsx.uk"
 
 ARG PHP_VERSION
+ARG PHP_PACKAGES
 ARG DEBIAN_FRONTEND=noninteractive
+ARG S6_OVERLAY_VERSION=3.0.0.2
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ENV METRICS_URL=https://github.com/hipages/php-fpm_exporter/releases/download/v2.0.2/php-fpm_exporter_2.0.2_linux_amd64 \
     HEALTHCHECK_URL=https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck \
@@ -33,50 +35,16 @@ RUN apt-get update \
     unzip \
     zip \
     --no-install-recommends -y \
-  && curl -L "$S6OVERLAY_URL" --output /tmp/s6-overlay-amd64-installer \
-  && chmod +x /tmp/s6-overlay-amd64-installer && /tmp/s6-overlay-amd64-installer / \
+  && curl -L https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch-${S6_OVERLAY_VERSION}.tar.xz --output /tmp/s6-overlay-noarch-${S6_OVERLAY_VERSION}.tar.xz \
+  && tar -C / -Jxpf /tmp/s6-overlay-noarch-${S6_OVERLAY_VERSION}.tar.xz \
+  && curl -L https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64-${S6_OVERLAY_VERSION}.tar.xz --output /tmp/s6-overlay-x86_64-${S6_OVERLAY_VERSION}.tar.xz \
+  && tar -C / -Jxpf /tmp/s6-overlay-x86_64-${S6_OVERLAY_VERSION}.tar.xz \
   && rm -rf /tmp/* \
   && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 4F4EA0AAE5267A6C \
   && echo "deb http://ppa.launchpad.net/ondrej/php/ubuntu focal main" \
     | tee /etc/apt/sources.list.d/ondrej.list \
   && apt-get update \
-  && apt-get install -y --no-install-recommends \
-    php${PHP_VERSION}-fpm \
-    php${PHP_VERSION}-cli \
-    php${PHP_VERSION}-apcu \
-    php${PHP_VERSION}-apcu-bc \
-    php${PHP_VERSION}-mysql \
-    php${PHP_VERSION}-mysqli \
-    php${PHP_VERSION}-memcached \
-    php${PHP_VERSION}-curl \
-    php${PHP_VERSION}-dom \
-    php${PHP_VERSION}-exif \
-    php${PHP_VERSION}-ftp \
-    php${PHP_VERSION}-gd \
-    php${PHP_VERSION}-iconv \
-    php${PHP_VERSION}-mbstring \
-    php${PHP_VERSION}-pdo \
-    php${PHP_VERSION}-posix \
-    php${PHP_VERSION}-soap \
-    php${PHP_VERSION}-zip \
-    php${PHP_VERSION}-ldap \
-    php${PHP_VERSION}-bcmath \
-    php${PHP_VERSION}-calendar \
-    php${PHP_VERSION}-gettext \
-    php${PHP_VERSION}-json \
-    php${PHP_VERSION}-apcu \
-    php${PHP_VERSION}-phar \
-    php${PHP_VERSION}-sockets \
-    php${PHP_VERSION}-tidy \
-    php${PHP_VERSION}-xmlreader \
-    php${PHP_VERSION}-xsl \
-    php${PHP_VERSION}-opcache \
-    php${PHP_VERSION}-imagick \
-    php${PHP_VERSION}-ctype \
-    php${PHP_VERSION}-sqlite3 \
-    php${PHP_VERSION}-intl \
-    php${PHP_VERSION}-redis \
-    php${PHP_VERSION}-pgsql \
+  && apt-get install -y --no-install-recommends ${PHP_PACKAGES} \
   ## Adds in PHP-FPM Prometheus metrics scraper
   && curl -L "$METRICS_URL" --output /usr/local/bin/php-fpm_exporter \
   && chmod +x /usr/local/bin/php-fpm_exporter \

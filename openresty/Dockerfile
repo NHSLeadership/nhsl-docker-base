@@ -1,27 +1,29 @@
 FROM ubuntu:focal
 LABEL maintainer="devops@nhsx.uk"
 
-ARG DEBIAN_FRONTEND=noninteractive
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ARG S6_OVERLAY_VERSION=3.0.0.2
 ENV S6_READ_ONLY_ROOT=1 \
     S6_KEEP_ENV=1 \
-    S6_LOGGING=0
+    S6_LOGGING=0 \
+    DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
   && apt-get install \
      ca-certificates \
      curl \
      gnupg \
+     xz-utils \
      --no-install-recommends -y \
-  && curl -L https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.3/s6-overlay-amd64-installer --output /tmp/s6-overlay-amd64-installer \
-  && chmod +x /tmp/s6-overlay-amd64-installer && /tmp/s6-overlay-amd64-installer / \
+  && curl -L https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch-${S6_OVERLAY_VERSION}.tar.xz --output /tmp/s6-overlay-noarch-${S6_OVERLAY_VERSION}.tar.xz \
+  && tar -C / -Jxpf /tmp/s6-overlay-noarch-${S6_OVERLAY_VERSION}.tar.xz \
+  && curl -L https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64-${S6_OVERLAY_VERSION}.tar.xz --output /tmp/s6-overlay-x86_64-${S6_OVERLAY_VERSION}.tar.xz \
+  && tar -C / -Jxpf /tmp/s6-overlay-x86_64-${S6_OVERLAY_VERSION}.tar.xz \
   && rm -rf /tmp/* \
   && curl -L https://openresty.org/package/pubkey.gpg | apt-key add - \
   && echo "deb http://openresty.org/package/ubuntu focal main" \
      | tee /etc/apt/sources.list.d/openresty.list \
   && apt-get update \
   && apt-get install -y --no-install-recommends openresty openresty-opm \
-  ## Install Prometheus metrics exporter
   && opm get knyar/nginx-lua-prometheus \
   && apt-get remove -y --purge curl gnupg \
   && apt-get autoremove -y \

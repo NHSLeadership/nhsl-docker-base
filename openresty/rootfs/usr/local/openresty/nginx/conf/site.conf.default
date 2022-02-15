@@ -5,7 +5,7 @@ server {
     # We listen on 8080 so we can run as a non-root user
     listen 8080 default_server;
     server_name  _;
-    root /app-shared/public;
+    root /app/public;
 
     add_header x-nhsla-pod $hostname;
     add_header x-nhsla-site $site_name;
@@ -40,8 +40,6 @@ server {
 	    }
 	    access_log off;
 	}
-
-
 
 	error_page 403 /403.html;
 	error_page 404 /404.html;
