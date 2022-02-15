@@ -4,7 +4,6 @@ LABEL maintainer="devops@nhsx.uk"
 ARG PHP_VERSION
 ARG PHP_PACKAGES
 ARG DEBIAN_FRONTEND=noninteractive
-ARG S6_OVERLAY_VERSION=3.0.0.2
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ENV METRICS_URL=https://github.com/hipages/php-fpm_exporter/releases/download/v2.0.2/php-fpm_exporter_2.0.2_linux_amd64 \
     HEALTHCHECK_URL=https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck \
@@ -35,10 +34,8 @@ RUN apt-get update \
     zip \
     xz-utils \
     --no-install-recommends -y \
-  && curl -L https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch-${S6_OVERLAY_VERSION}.tar.xz --output /tmp/s6-overlay-noarch-${S6_OVERLAY_VERSION}.tar.xz \
-  && tar -C / -Jxpf /tmp/s6-overlay-noarch-${S6_OVERLAY_VERSION}.tar.xz \
-  && curl -L https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64-${S6_OVERLAY_VERSION}.tar.xz --output /tmp/s6-overlay-x86_64-${S6_OVERLAY_VERSION}.tar.xz \
-  && tar -C / -Jxpf /tmp/s6-overlay-x86_64-${S6_OVERLAY_VERSION}.tar.xz \
+  && curl -L https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.3/s6-overlay-amd64-installer --output /tmp/s6-overlay-amd64-installer \
+  && chmod +x /tmp/s6-overlay-amd64-installer && /tmp/s6-overlay-amd64-installer / \
   && rm -rf /tmp/* \
   && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 4F4EA0AAE5267A6C \
   && echo "deb http://ppa.launchpad.net/ondrej/php/ubuntu focal main" \

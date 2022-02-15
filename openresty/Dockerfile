@@ -1,7 +1,6 @@
 FROM ubuntu:focal
 LABEL maintainer="devops@nhsx.uk"
 
-ARG S6_OVERLAY_VERSION=3.0.0.2
 ENV S6_READ_ONLY_ROOT=1 \
     S6_KEEP_ENV=1 \
     S6_LOGGING=0 \
@@ -14,10 +13,8 @@ RUN apt-get update \
      gnupg \
      xz-utils \
      --no-install-recommends -y \
-  && curl -L https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch-${S6_OVERLAY_VERSION}.tar.xz --output /tmp/s6-overlay-noarch-${S6_OVERLAY_VERSION}.tar.xz \
-  && tar -C / -Jxpf /tmp/s6-overlay-noarch-${S6_OVERLAY_VERSION}.tar.xz \
-  && curl -L https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64-${S6_OVERLAY_VERSION}.tar.xz --output /tmp/s6-overlay-x86_64-${S6_OVERLAY_VERSION}.tar.xz \
-  && tar -C / -Jxpf /tmp/s6-overlay-x86_64-${S6_OVERLAY_VERSION}.tar.xz \
+  && curl -L https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.3/s6-overlay-amd64-installer --output /tmp/s6-overlay-amd64-installer \
+  && chmod +x /tmp/s6-overlay-amd64-installer && /tmp/s6-overlay-amd64-installer / \
   && rm -rf /tmp/* \
   && curl -L https://openresty.org/package/pubkey.gpg | apt-key add - \
   && echo "deb http://openresty.org/package/ubuntu focal main" \
