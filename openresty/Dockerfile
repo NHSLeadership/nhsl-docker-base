@@ -1,4 +1,4 @@
-FROM ubuntu:focal
+FROM ubuntu:jammy
 LABEL maintainer="devops@nhsx.uk"
 
 ENV S6_READ_ONLY_ROOT=1 \
@@ -17,7 +17,7 @@ RUN apt-get update \
   && chmod +x /tmp/s6-overlay-amd64-installer && /tmp/s6-overlay-amd64-installer / \
   && rm -rf /tmp/* \
   && curl -L https://openresty.org/package/pubkey.gpg | apt-key add - \
-  && echo "deb http://openresty.org/package/ubuntu focal main" \
+  && echo "deb http://openresty.org/package/ubuntu jammy main" \
      | tee /etc/apt/sources.list.d/openresty.list \
   && apt-get update \
   && apt-get install -y --no-install-recommends openresty openresty-opm \

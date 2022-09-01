@@ -1,12 +1,10 @@
 # Base Docker Images
 
-> Clean and functional base images providing PHP versions 7.1 to 7.4 and OpenResty web server.
+> Clean and functional base images providing PHP versions 7.2 to 8.1 and OpenResty web server.
 >
 > By NHS Leadership Academy
->
-> Special shout-out to [Parallax](https://parall.ax) for help and inspiration.
 
-This repository provides two images, one containing PHP-FPM (also able to run cron) and another running OpenResty. They are designed to be used together in a single Kubernetes pod.
+This repository provides two images, one containing PHP-FPM (also able to run cron) and another running OpenResty. They are designed to be used together in a single Kubernetes pod to support our own web applications.
 
 ## Rationale
 
