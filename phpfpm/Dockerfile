@@ -1,15 +1,15 @@
-FROM ubuntu:focal
+FROM ubuntu:jammy
 LABEL maintainer="devops@nhsx.uk"
 
 ARG PHP_VERSION
 ARG PHP_PACKAGES
 ARG DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-ENV METRICS_URL=https://github.com/hipages/php-fpm_exporter/releases/download/v2.0.2/php-fpm_exporter_2.0.2_linux_amd64 \
+ENV METRICS_URL=https://github.com/hipages/php-fpm_exporter/releases/download/v2.2.0/php-fpm_exporter_2.2.0_linux_amd64 \
     HEALTHCHECK_URL=https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck \
-    SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.1.12/supercronic-linux-amd64 \
+    SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.1/supercronic-linux-amd64 \
     SUPERCRONIC=supercronic-linux-amd64 \
-    SUPERCRONIC_SHA1SUM=048b95b48b708983effb2e5c935a1ef8483d9e3e \
+    SUPERCRONIC_SHA1SUM=d7f4c0886eb85249ad05ed592902fa6865bb9d70 \
     S6_FIX_ATTRS_HIDDEN=1 \
     S6_READ_ONLY_ROOT=1 \
     S6_KEEP_ENV=1 \
@@ -38,7 +38,7 @@ RUN apt-get update \
   && chmod +x /tmp/s6-overlay-amd64-installer && /tmp/s6-overlay-amd64-installer / \
   && rm -rf /tmp/* \
   && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 4F4EA0AAE5267A6C \
-  && echo "deb http://ppa.launchpad.net/ondrej/php/ubuntu focal main" \
+  && echo "deb http://ppa.launchpad.net/ondrej/php/ubuntu jammy main" \
     | tee /etc/apt/sources.list.d/ondrej.list \
   && apt-get update \
   && apt-get install -y --no-install-recommends ${PHP_PACKAGES} \
