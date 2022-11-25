@@ -1,1 +1,2 @@
-*/1 * * * * /usr/bin/php /app/test.php
+# Example
+# */1 * * * * /usr/bin/php /app/test.php
