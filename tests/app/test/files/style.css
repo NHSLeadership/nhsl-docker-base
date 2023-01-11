@@ -1,0 +1,17 @@
+body {
+    font-family: 'Courier New', Courier, monospace;
+}
+
+#wrapper {
+    border: 1px solid;
+    background: yellow;
+    width: 25%;
+    overflow: hidden;
+}
+
+#js {
+    width: auto;
+    white-space: nowrap;
+    clear: both;
+    float: left;
+}

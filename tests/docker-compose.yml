@@ -1,0 +1,40 @@
+version: '3.6'
+services:
+  openresty:
+    container_name: openresty
+    build:
+      context: ./openresty/
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./app/:/app/public/
+      - ./shared-app-openresty.conf:/etc/openresty/site.conf
+      - app-shared:/app-shared
+    environment:
+      AWS_HOST_ENVIRONMENT: "true"
+
+  phpfpm:
+    container_name: phpfpm
+    build:
+      context: ./phpfpm/
+      dockerfile: Dockerfile
+      args:
+        PHP_VERSION: ${phpvers}
+        PHP_PACKAGES: |-
+          ${phpmods}
+    network_mode: "container:openresty"
+    volumes:
+      - ./app/:/app/public/
+      - app-shared:/app-shared
+    depends_on:
+      - openresty
+    environment:
+      AWS_HOST_ENVIRONMENT: "true"
+
+volumes:
+  app-shared:
+    driver_opts:
+      type: tmpfs
+      o: "size=1g"
+      device: tmpfs

@@ -21,7 +21,6 @@ RUN apt-get update \
     busybox-static \
     ca-certificates \
     curl \
-    ghostscript \
     git \
     gnupg \
     gpg-agent \
@@ -68,7 +67,6 @@ RUN apt-get update \
   && mkdir -p /nhsla \
   && chown -R nhsla:nhsla /nhsla \
   && sed -i -e 's|variables_order = "GPCS"|variables_order = "EGPCS"|g' /etc/php/${PHP_VERSION}/fpm/php.ini \
-  && sed -i -e 's|variables_order = "GPCS"|variables_order = "EGPCS"|g' /etc/php/${PHP_VERSION}/cli/php.ini \
   && sed -i -e 's|;clear_env = no|clear_env = no|g' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
   && sed -i "s|;date.timezone =.*|date.timezone = UTC|" /etc/php/${PHP_VERSION}/fpm/php.ini \
   && sed -i "s|upload_max_filesize = .*|upload_max_filesize = 1G|" /etc/php/${PHP_VERSION}/fpm/php.ini \
@@ -86,7 +84,6 @@ RUN apt-get update \
   && ln -s /nhsla/etc/php.ini /etc/php/${PHP_VERSION}/fpm/php.ini \
   && ln -s /nhsla/etc/www.conf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
   && ln -s /nhsla/etc/atatus.ini /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini \
-  && ln -s /nhsla/etc/atatus.ini /etc/php/${PHP_VERSION}/cli/conf.d/20-atatus.ini \
   && rm -rf /etc/ssmtp/ssmtp.conf \
   && ln -s /nhsla/etc/ssmtp.conf /etc/ssmtp/ssmtp.conf \
   && curl -fsSLO "$SUPERCRONIC_URL" \
