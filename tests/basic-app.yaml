@@ -1,102 +1,215 @@
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  creationTimestamp: null
-  labels:
-    app: test-app
-  name: test-app
+ name: '{{ app }}-{{ branch }}-{{ build }}'
+ namespace: '{{ namespace }}'
 spec:
-  volumes:
-    - name: shared-app
-      emptyDir: {}
-    - name: nhsla-etc
-      emptyDir: {}
-    - name: tmp-openresty
-      emptyDir: {}
-    - name: tmp-phpfpm
-      emptyDir: {}
-  containers:
-  - image: openresty2:0.3
-    name: nginx
-    resources: {}
-    securityContext:
-      readOnlyRootFilesystem: true
-      runAsNonRoot: true
-    volumeMounts:
+{% if environment == 'production' %}
+  replicas: 3
+{% else %}
+  replicas: 1
+{% endif %}
+  selector:
+    matchLabels:
+      app: '{{ app }}-{{ branch }}-{{ build }}'
+  revisionHistoryLimit: 1
+  minReadySeconds: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: '{{ app }}-{{ branch }}-{{ build }}'
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - '{{ app }}-{{ branch }}-{{ build }}'
+              topologyKey: "kubernetes.io/hostname"
+      volumes:
+      - name: efs
+        persistentVolumeClaim:
+          claimName: '{{ app }}'
       - name: shared-app
-        mountPath: /app-shared
+        emptyDir: {}
       - name: nhsla-etc
-        mountPath: /nhsla/etc
+        emptyDir: {}
+      - name: openresty-s6
+        emptyDir: {}
+      - name: phpfpm-s6
+        emptyDir: {}        
       - name: tmp-openresty
-        mountPath: /tmp
-    imagePullPolicy: Never
-    ports:
-    - containerPort: 8080
-      name: http
-      protocol: TCP
-  - image: test-phpexport:0.1
-    name: phpfpm
-    resources: {}
-    imagePullPolicy: Never
-    livenessProbe:
-      exec:
-          command:
-              - php-fpm-healthcheck
-      initialDelaySeconds: 0
-      periodSeconds: 10
-    readinessProbe:
-      exec:
-          command:
-              - php-fpm-healthcheck
-      initialDelaySeconds: 1
-      periodSeconds: 5
-    securityContext:
-      readOnlyRootFilesystem: true
-      runAsNonRoot: true
-    volumeMounts:
-      - name: shared-app
-        mountPath: /app-shared
-      - name: nhsla-etc
-        mountPath: /nhsla/etc
+        emptyDir: {}
       - name: tmp-phpfpm
-        mountPath: /tmp
-  - image: hipages/php-fpm_exporter:latest
-    name: phpfpm-metrics
-    resources: {}
-    imagePullPolicy: Always
-    #liveness and readiness probes http check metrics are up
-  dnsPolicy: ClusterFirst
-  restartPolicy: Always
-status: {}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: 'nginx'
-  namespace: test1
-spec:
-  ports:
-  - name: openresty
-    port: 80
-    protocol: TCP
-    targetPort: 8080
-  selector:
-    app: 'test-app'
-  sessionAffinity: None
-  type: NodePort
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: 'phpmetrics'
-  namespace: test1
-spec:
-  ports:
-  - name: phpmetrics
-    port: 9253
-    protocol: TCP
-    targetPort: 9253
-  selector:
-    app: 'test-app'
-  sessionAffinity: None
-  type: NodePort
+        emptyDir: {}
+      - name: configmap-web
+        configMap:
+          name: 'webconf-{{ app }}-{{ branch }}-{{ build }}'
+      - name: configmap-php
+        configMap:
+          name: 'phpconf-{{ app }}-{{ branch }}-{{ build }}'
+      containers:
+        - name: certsys-openresty
+          image: nhsleadershipacademy/nhsl-ubuntu-openresty:master
+          imagePullPolicy: Always
+          ports:
+            - name: openresty
+              containerPort: 8080
+              protocol: TCP
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          volumeMounts:
+          - name: shared-app
+            mountPath: /app-shared
+          - name: openresty-s6
+            mountPath: /var/run/s6
+          - name: tmp-openresty
+            mountPath: /tmp
+          - name: configmap-web
+            mountPath: /etc/openresty/site.conf
+            subPath: site.conf
+          - name: efs
+            mountPath: /app-shared/storage
+          resources:
+            requests:
+              memory: 40Mi
+              cpu: 50m
+            limits:
+              memory: 80Mi
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: openresty
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: openresty
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            successThreshold: 3
+          env:
+            - name: ROLE
+              value: "web"
+            - name: ENVIRONMENT
+              value: '{{ environment }}'
+            - name: AWS_HOST_ENVIRONMENT
+              value: '{{ environment }}'
+            - name: SITE_NAME
+              value: '{{ app }}'
+            - name: SITE_BRANCH
+              value: '{{ branch }}'
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: 'mysql80-credentials-{{ branch }}'
+                  key: endpoint
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: 'mysql80-credentials-{{ branch }}'
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: 'mysql80-credentials-{{ branch }}'
+                  key: password
+            - name: DB_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: 'mysql80-credentials-{{ branch }}'
+                  key: database
+            - name: BUILD
+              value: '{{ build }}'
+            - name: DB_PORT
+              value: '3306'
+            - name: K8S_ENV
+              value: 'aws_kops'
+        - name: certsys-phpfpm
+          image: {{ image_certsys }}
+          livenessProbe:
+            exec:
+                command:
+                    - php-fpm-healthcheck
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+                command:
+                    - php-fpm-healthcheck
+            initialDelaySeconds: 1
+            periodSeconds: 5
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          volumeMounts:
+            - name: efs
+              mountPath: /app-shared/storage
+            - name: shared-app
+              mountPath: /app-shared
+            - name: nhsla-etc
+              mountPath: /nhsla/etc
+            - name: phpfpm-s6
+              mountPath: /var/run/s6              
+            - name: tmp-phpfpm
+              mountPath: /tmp
+            - name: configmap-php
+              mountPath: /etc/php/7.4/fpm/conf.d/99-nhsla.ini
+              subPath: 99-nhsla.ini
+          resources:
+            requests:
+              cpu: 120m
+              memory: 512Mi
+            limits:
+              memory: 1024Mi
+          env:
+            - name: ROLE
+              value: "phpfpm"
+            - name: ENVIRONMENT
+              value: '{{ environment }}'
+            - name: AWS_HOST_ENVIRONMENT
+              value: '{{ environment }}'
+            - name: SITE_NAME
+              value: '{{ app }}'
+            - name: SITE_BRANCH
+              value: '{{ branch }}'
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: 'mysql80-credentials-{{ branch }}'
+                  key: endpoint
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: 'mysql80-credentials-{{ branch }}'
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: 'mysql80-credentials-{{ branch }}'
+                  key: password
+            - name: DB_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: 'mysql80-credentials-{{ branch }}'
+                  key: database
+            - name: BUILD
+              value: '{{ build }}'
+            - name: DB_PORT
+              value: '3306'
+            - name: K8S_ENV
+              value: 'aws_kops'
+      terminationGracePeriodSeconds: 20

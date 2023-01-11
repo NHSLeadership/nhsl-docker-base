@@ -12,15 +12,24 @@ help:
 	@echo ""
 	@echo "Commands:"
 	@echo "    build-all		Builds all PHP and Openresty images with the same tag"
+	@echo "    build-openresty  Builds the NHSLA Openresty image
 	@echo "    build-php72		Builds a PHP 7.2 image"
 	@echo "    build-php73		Builds a PHP 7.3 image"
 	@echo "    build-php74		Builds a PHP 7.4 image"
 	@echo "    build-php80		Builds a PHP 8.0 image"
 	@echo "    build-php81		Builds a PHP 8.1 image"
+	@echo "    test-php72		Builds and runs a Docker stack on port 8080 to test PHP 7.2"
+	@echo "    test-php73		Builds and runs a Docker stack on port 8080 to test PHP 7.3"
+	@echo "    test-php74		Builds and runs a Docker stack on port 8080 to test PHP 7.4"
+	@echo "    test-php80		Builds and runs a Docker stack on port 8080 to test PHP 8.0"
+	@echo "    test-php81		Builds and runs a Docker stack on port 8080 to test PHP 8.1"
 	@echo ""
 
 build-all:
-	build-php72 build-php73 build-php74 build-php80 build-php81
+	build-openresty build-php72 build-php73 build-php74 build-php80 build-php81
+
+build-openresty:
+	docker build -t ${REPO}nhsl-ubuntu-openresty:${TAG} -f ./openresty/Dockerfile ./openresty/
 
 build-php72:
 	@echo "$$(tr -d '\r' < ./phpfpm/php72.txt)" > ./phpfpm/php72.txt
@@ -42,5 +51,22 @@ build-php81:
 	@echo "$$(tr -d '\r' < ./phpfpm/php81.txt)" > ./phpfpm/php81.txt
 	docker build --build-arg PHP_VERSION=8.1 --build-arg PHP_PACKAGES="$$(cat ./phpfpm/php81.txt)" -t ${REPO}nhsl-ubuntu-phpv2:8.1-${TAG} -f ./phpfpm/Dockerfile ./phpfpm/
 
-build-openresty:
-	docker build -t ${REPO}nhsl-ubuntu-openresty:${TAG} -f ./openresty/Dockerfile ./openresty/
+test-php72:
+	@echo "$$(tr -d '\r' < ./phpfpm/php72.txt)" > ./phpfpm/php72.txt
+	env phpmods="$$(cat ./phpfpm/php72.txt)" env phpvers=7.2 docker-compose -f tests/docker-compose.yml
+
+test-php73:
+	@echo "$$(tr -d '\r' < ./phpfpm/php73.txt)" > ./phpfpm/php73.txt
+	env phpmods="$$(cat ./phpfpm/php73.txt)" env phpvers=7.3 docker-compose -f tests/docker-compose.yml
+
+test-php74:
+	@echo "$$(tr -d '\r' < ./phpfpm/php74.txt)" > ./phpfpm/php74.txt
+	env phpmods="$$(cat ./phpfpm/php74.txt)" env phpvers=7.4 docker-compose -f tests/docker-compose.yml
+
+test-php80:
+	@echo "$$(tr -d '\r' < ./phpfpm/php80.txt)" > ./phpfpm/php80.txt
+	env phpmods="$$(cat ./phpfpm/php80.txt)" env phpvers=8.0 docker-compose -f tests/docker-compose.yml
+
+test-php81:
+	@echo "$$(tr -d '\r' < ./phpfpm/php81.txt)" > ./phpfpm/php81.txt
+	env phpmods="$$(cat ./phpfpm/php81.txt)" env phpvers=8.1 docker-compose -f tests/docker-compose.yml

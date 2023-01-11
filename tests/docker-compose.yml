@@ -1,0 +1,27 @@
+version: '3'
+services:
+  openresty:
+    build:
+      context: ./openresty/
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    volumes:
+      - ./tests/app:/app/
+    links:
+      - php
+
+  phpfpm:
+    build:
+      context: ./phpfpm/
+      dockerfile: Dockerfile
+      args:
+        PHP_VERSION: ${phpvers}
+        PHP_PACKAGES: |-
+          ${phpmods}
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./tests/app:/app/
+    links:
+      - openresty
