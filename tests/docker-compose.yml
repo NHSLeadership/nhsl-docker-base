@@ -1,17 +1,17 @@
 version: '3'
 services:
   openresty:
+    container_name: openresty
     build:
       context: ./openresty/
       dockerfile: Dockerfile
     ports:
-      - "8080:80"
+      - "8080:8080"
     volumes:
-      - ./tests/app:/app/
-    links:
-      - php
+      - ./app/:/app/public/
 
   phpfpm:
+    container_name: phpfpm
     build:
       context: ./phpfpm/
       dockerfile: Dockerfile
@@ -19,9 +19,8 @@ services:
         PHP_VERSION: ${phpvers}
         PHP_PACKAGES: |-
           ${phpmods}
-    ports:
-      - "9000:9000"
+    network_mode: "container:openresty"
     volumes:
-      - ./tests/app:/app/
-    links:
+      - ./app/:/app/public/
+    depends_on:
       - openresty
