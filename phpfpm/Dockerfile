@@ -58,9 +58,7 @@ RUN apt-get update \
     && apt-get update \
     && apt-get install atatus-php-agent --no-install-recommends -y \
   && apt-get remove -y --purge gnupg \
-  && apt-get autoremove -y \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+  && rm -rf /var/lib/apt/lists/* \
   && useradd --create-home --shell /bin/bash --uid 1000 nhsla \
   && mkdir -p /app/public \
   && chown -R nhsla:nhsla /app \
