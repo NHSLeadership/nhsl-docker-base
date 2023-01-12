@@ -32,7 +32,7 @@ RUN apt-get update \
     unzip \
     zip \
     xz-utils \
-    --no-install-recommends -y \
+    -y rm -rf /var/lib/apt/lists/* \
   && curl -L https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.3/s6-overlay-amd64-installer --output /tmp/s6-overlay-amd64-installer \
   && chmod +x /tmp/s6-overlay-amd64-installer && /tmp/s6-overlay-amd64-installer / \
   && rm -rf /tmp/* \
@@ -40,7 +40,7 @@ RUN apt-get update \
   && echo "deb http://ppa.launchpad.net/ondrej/php/ubuntu jammy main" \
     | tee /etc/apt/sources.list.d/ondrej.list \
   && apt-get update \
-  && apt-get install -y --no-install-recommends ${PHP_PACKAGES} \
+  && apt-get install -y ${PHP_PACKAGES} && rm -rf /var/lib/apt/lists/* \
   ## Adds in PHP-FPM Prometheus metrics scraper
   && curl -L "$METRICS_URL" --output /usr/local/bin/php-fpm_exporter \
   && chmod +x /usr/local/bin/php-fpm_exporter \
@@ -56,7 +56,7 @@ RUN apt-get update \
     && echo "deb https://s3.amazonaws.com/atatus-artifacts/atatus-php/debian stable main" \
       | tee -a /etc/apt/sources.list.d/atatus-php-agent.list \
     && apt-get update \
-    && apt-get install atatus-php-agent --no-install-recommends -y \
+    && apt-get install atatus-php-agent -y && rm -rf /var/lib/apt/lists/* \
   && apt-get remove -y --purge gnupg \
   && useradd --create-home --shell /bin/bash --uid 1000 nhsla \
   && mkdir -p /app/public \
