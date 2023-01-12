@@ -32,7 +32,7 @@ RUN apt-get update \
     unzip \
     zip \
     xz-utils \
-    -y rm -rf /var/lib/apt/lists/* \
+    -y && rm -rf /var/lib/apt/lists/* \
   && curl -L https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.3/s6-overlay-amd64-installer --output /tmp/s6-overlay-amd64-installer \
   && chmod +x /tmp/s6-overlay-amd64-installer && /tmp/s6-overlay-amd64-installer / \
   && rm -rf tmp/* \
