@@ -6,11 +6,11 @@
 version: 2
 
 updates:
-  - package-ecosystem: "Docker"
+  - package-ecosystem: "docker"
     directory: "/phpfpm/" # Location of package manifests
     schedule:
       interval: "weekly"
-  - package-ecosystem: "Docker"
+  - package-ecosystem: "docker"
     directory: "/openresty/" # Location of package manifests
     schedule:
       interval: "weekly"
