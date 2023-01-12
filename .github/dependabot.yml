@@ -10,11 +10,7 @@ updates:
     directory: "/phpfpm/" # Location of package manifests
     schedule:
       interval: "weekly"
-   - package-ecosystem: "Docker"
+  - package-ecosystem: "Docker"
     directory: "/openresty/" # Location of package manifests
-    schedule:
-      interval: "weekly"
-  - package-ecosystem: "npm"
-    directory: "/"
     schedule:
       interval: "weekly"
