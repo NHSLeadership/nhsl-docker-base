@@ -11,6 +11,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: nhsl-ubuntu-openresty
+  ORG: nhsleadership
 
 jobs:
   build-and-push-image:
