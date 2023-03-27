@@ -1,4 +1,4 @@
-name: Build Openresty Image
+name: Build PHPFPM Images
 
 on:
   push:
@@ -24,18 +24,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Cleanup PHP modules
+      - name: Get lists of PHP modules to install
         run: |
-          echo php72mods=$(tr -d '\r' < ./phpfpm/php72.txt) >> $GITHUB_ENV && \
-          echo php73mods=$(tr -d '\r' < ./phpfpm/php73.txt)" >> $GITHUB_ENV && \
-          echo php74mods=$(tr -d '\r' < ./phpfpm/php74.txt)" >> $GITHUB_ENV && \
-          echo php80mods=$(tr -d '\r' < ./phpfpm/php80.txt)" >> $GITHUB_ENV && \
-          echo php81mods=$(tr -d '\r' < ./phpfpm/php81.txt)" >> $GITHUB_ENV
-      
-      - name: cat php72 mods
-        run: |
-          cat ./phpfpm/php72.txt
-        id: php72mods
+          echo "PHP72MODS=$(awk '$1=$1' ORS=' ' ./phpfpm/php72.txt)" >> $GITHUB_ENV
+          echo "PHP73MODS=$(awk '$1=$1' ORS=' ' ./phpfpm/php73.txt)" >> $GITHUB_ENV
+          echo "PHP74MODS=$(awk '$1=$1' ORS=' ' ./phpfpm/php74.txt)" >> $GITHUB_ENV
+          echo "PHP80MODS=$(awk '$1=$1' ORS=' ' ./phpfpm/php80.txt)" >> $GITHUB_ENV
+          echo "PHP81MODS=$(awk '$1=$1' ORS=' ' ./phpfpm/php81.txt)" >> $GITHUB_ENV
 
       - name: Login to GHCR
         uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
@@ -50,11 +45,6 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-      - name: Enumerate PHP modules
-        run: |
-          eeee
-        id: 72mods
-
       - name: Build and push PHP 7.2
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
@@ -64,7 +54,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             PHP_VERSION=7.2
-            PHP_PACKAGES=${{ env.php72mods }}
+            PHP_PACKAGES=${{ env.PHP72MODS }}
 
       - name: Build and push PHP 7.3
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
@@ -75,7 +65,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             PHP_VERSION=7.3
-            PHP_PACKAGES=${{ env.php73mods }}
+            PHP_PACKAGES=${{ env.PHP73MODS }}
 
       - name: Build and push PHP 7.4
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
@@ -86,7 +76,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             PHP_VERSION=7.4
-            PHP_PACKAGES=${{ env.php74mods }}
+            PHP_PACKAGES=${{ env.PHP74MODS }}
 
       - name: Build and push PHP 8.0
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
@@ -97,7 +87,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             PHP_VERSION=8.0
-            PHP_PACKAGES=${{ env.php80mods }}
+            PHP_PACKAGES=${{ env.PHP80MODS }}
 
       - name: Build and push PHP 8.1
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
@@ -108,5 +98,5 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             PHP_VERSION=8.1
-            PHP_PACKAGES=${{ env.php81mods }}
+            PHP_PACKAGES=${{ env.PHP81MODS }}
 
