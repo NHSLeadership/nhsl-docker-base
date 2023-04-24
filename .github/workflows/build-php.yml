@@ -68,7 +68,6 @@ jobs:
           sarif_file: 'trivy-results72.sarif'
           category: phpfpm
 
-jobs:
   build-php73-image:
     runs-on: ubuntu-latest
     permissions:
@@ -124,7 +123,6 @@ jobs:
           sarif_file: 'trivy-results73.sarif'
           category: phpfpm
 
-jobs:
   build-php74-image:
     runs-on: ubuntu-latest
     permissions:
@@ -180,7 +178,6 @@ jobs:
           sarif_file: 'trivy-results74.sarif'
           category: phpfpm
 
-jobs:
   build-php80-image:
     runs-on: ubuntu-latest
     permissions:
@@ -236,7 +233,6 @@ jobs:
           sarif_file: 'trivy-results80.sarif'
           category: phpfpm
 
-jobs:
   build-php81-image:
     runs-on: ubuntu-latest
     permissions:
