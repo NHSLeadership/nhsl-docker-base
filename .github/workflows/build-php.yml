@@ -14,7 +14,7 @@ env:
   ORG: nhsleadership
 
 jobs:
-  build-and-push-image:
+  build-php72-image:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -28,10 +28,6 @@ jobs:
       - name: Get lists of PHP modules to install
         run: |
           echo "PHP72MODS=$(awk '$1=$1' ORS=' ' ./phpfpm/php72.txt)" >> $GITHUB_ENV
-          echo "PHP73MODS=$(awk '$1=$1' ORS=' ' ./phpfpm/php73.txt)" >> $GITHUB_ENV
-          echo "PHP74MODS=$(awk '$1=$1' ORS=' ' ./phpfpm/php74.txt)" >> $GITHUB_ENV
-          echo "PHP80MODS=$(awk '$1=$1' ORS=' ' ./phpfpm/php80.txt)" >> $GITHUB_ENV
-          echo "PHP81MODS=$(awk '$1=$1' ORS=' ' ./phpfpm/php81.txt)" >> $GITHUB_ENV
 
       - name: Login to GHCR
         uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
@@ -57,6 +53,51 @@ jobs:
             PHP_VERSION=7.2
             PHP_PACKAGES=${{ env.PHP72MODS }}
 
+      - name: Trivy scan PHP 7.2 image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:7.2-master
+          format: 'sarif'
+          output: 'trivy-results72.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Upload Trivy PHP 7.2 results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results72.sarif'
+          category: phpfpm
+
+jobs:
+  build-php73-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Get lists of PHP modules to install
+        run: |
+          echo "PHP73MODS=$(awk '$1=$1' ORS=' ' ./phpfpm/php73.txt)" >> $GITHUB_ENV
+
+
+      - name: Login to GHCR
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
       - name: Build and push PHP 7.3
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
@@ -67,6 +108,51 @@ jobs:
           build-args: |
             PHP_VERSION=7.3
             PHP_PACKAGES=${{ env.PHP73MODS }}
+
+      - name: Trivy scan PHP 7.3 image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:7.3-master
+          format: 'sarif'
+          output: 'trivy-results73.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Upload Trivy PHP 7.3 results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results73.sarif'
+          category: phpfpm
+
+jobs:
+  build-php74-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Get lists of PHP modules to install
+        run: |
+          echo "PHP74MODS=$(awk '$1=$1' ORS=' ' ./phpfpm/php74.txt)" >> $GITHUB_ENV
+
+
+      - name: Login to GHCR
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Build and push PHP 7.4
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
@@ -79,6 +165,51 @@ jobs:
             PHP_VERSION=7.4
             PHP_PACKAGES=${{ env.PHP74MODS }}
 
+      - name: Trivy scan PHP 7.4 image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:7.4-master
+          format: 'sarif'
+          output: 'trivy-results74.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Upload Trivy PHP 7.4 results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results74.sarif'
+          category: phpfpm
+
+jobs:
+  build-php80-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Get lists of PHP modules to install
+        run: |
+          echo "PHP80MODS=$(awk '$1=$1' ORS=' ' ./phpfpm/php80.txt)" >> $GITHUB_ENV
+
+
+      - name: Login to GHCR
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
       - name: Build and push PHP 8.0
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
@@ -89,6 +220,50 @@ jobs:
           build-args: |
             PHP_VERSION=8.0
             PHP_PACKAGES=${{ env.PHP80MODS }}
+
+      - name: Trivy scan PHP 8.0 image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:8.0-master
+          format: 'sarif'
+          output: 'trivy-results80.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Upload Trivy PHP 8.0 results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results80.sarif'
+          category: phpfpm
+
+jobs:
+  build-php81-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Get lists of PHP modules to install
+        run: |
+          echo "PHP81MODS=$(awk '$1=$1' ORS=' ' ./phpfpm/php81.txt)" >> $GITHUB_ENV
+
+      - name: Login to GHCR
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Build and push PHP 8.1
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
@@ -101,42 +276,6 @@ jobs:
             PHP_VERSION=8.1
             PHP_PACKAGES=${{ env.PHP81MODS }}
 
-      - name: Trivy scan PHP 7.2 image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:7.2-master
-          format: 'sarif'
-          output: 'trivy-results72.sarif'
-          severity: 'CRITICAL,HIGH'
-          ignore-unfixed: true
-
-      - name: Trivy scan PHP 7.3 image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:7.3-master
-          format: 'sarif'
-          output: 'trivy-results73.sarif'
-          severity: 'CRITICAL,HIGH'
-          ignore-unfixed: true
-
-      - name: Trivy scan PHP 7.4 image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:7.4-master
-          format: 'sarif'
-          output: 'trivy-results74.sarif'
-          severity: 'CRITICAL,HIGH'
-          ignore-unfixed: true
-
-      - name: Trivy scan PHP 8.0 image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:8.0-master
-          format: 'sarif'
-          output: 'trivy-results80.sarif'
-          severity: 'CRITICAL,HIGH'
-          ignore-unfixed: true
-
       - name: Trivy scan PHP 8.1 image
         uses: aquasecurity/trivy-action@master
         with:
@@ -145,30 +284,6 @@ jobs:
           output: 'trivy-results81.sarif'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
-
-      - name: Upload Trivy PHP 7.2 results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: 'trivy-results72.sarif'
-          category: phpfpm
-
-      - name: Upload Trivy PHP 7.3 results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: 'trivy-results73.sarif'
-          category: phpfpm
-
-      - name: Upload Trivy PHP 7.4 results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: 'trivy-results74.sarif'
-          category: phpfpm
-
-      - name: Upload Trivy PHP 8.0 results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: 'trivy-results80.sarif'
-          category: phpfpm
 
       - name: Upload Trivy PHP 8.1 results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v2
