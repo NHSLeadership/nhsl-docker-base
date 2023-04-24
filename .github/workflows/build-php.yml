@@ -100,3 +100,77 @@ jobs:
             PHP_VERSION=8.1
             PHP_PACKAGES=${{ env.PHP81MODS }}
 
+      - name: Trivy scan PHP 7.2 image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:7.2-master
+          format: 'sarif'
+          output: 'trivy-results72.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Trivy scan PHP 7.3 image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:7.3-master
+          format: 'sarif'
+          output: 'trivy-results73.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Trivy scan PHP 7.4 image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:7.4-master
+          format: 'sarif'
+          output: 'trivy-results74.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Trivy scan PHP 8.0 image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:8.0-master
+          format: 'sarif'
+          output: 'trivy-results80.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Trivy scan PHP 8.1 image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:8.1-master
+          format: 'sarif'
+          output: 'trivy-results81.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Upload Trivy PHP 7.2 results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results72.sarif'
+          category: phpfpm
+
+      - name: Upload Trivy PHP 7.3 results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results73.sarif'
+          category: phpfpm
+
+      - name: Upload Trivy PHP 7.4 results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results74.sarif'
+          category: phpfpm
+
+      - name: Upload Trivy PHP 8.0 results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results80.sarif'
+          category: phpfpm
+
+      - name: Upload Trivy PHP 8.1 results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results81.sarif'
+          category: phpfpm
