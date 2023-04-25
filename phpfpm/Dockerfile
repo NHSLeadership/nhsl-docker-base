@@ -42,8 +42,9 @@ RUN apt-get update \
   && apt-get update \
   && apt-get install -y ${PHP_PACKAGES} && rm -rf /var/lib/apt/lists/* \
   ## Adds in PHP-FPM Prometheus metrics scraper
-  && curl -L "$METRICS_URL" --output /usr/local/bin/php-fpm_exporter \
-  && chmod +x /usr/local/bin/php-fpm_exporter \
+  ## TODO: Disabled April 2023 until we actually use PHP metrics for something meaningful.
+  ## && curl -L "$METRICS_URL" --output /usr/local/bin/php-fpm_exporter \
+  ## && chmod +x /usr/local/bin/php-fpm_exporter \
   ## Add PHP-FPM Health check script
   && curl "$HEALTHCHECK_URL" --output /usr/local/bin/php-fpm-healthcheck \
   && chmod +x /usr/local/bin/php-fpm-healthcheck \
