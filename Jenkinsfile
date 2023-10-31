@@ -7,6 +7,8 @@ pipeline {
                 stage('Build Openresty Image') {
                     steps {
                         sh 'make build-openresty TAG=${GIT_BRANCH#*/} REPO="nhsleadershipacademy/"'
+                        sh 'make build-openresty TAG=${GIT_BRANCH#*/} REPO="481015924503.dkr.ecr.eu-west-2.amazonaws.com/"'
+                        sh 'docker push 481015924503.dkr.ecr.eu-west-2.amazonaws.com/nhsl-ubuntu-openresty:${GIT_BRANCH#*/}'
                     }
                 }
                 stage('Build PHP 7.2 Image') {
