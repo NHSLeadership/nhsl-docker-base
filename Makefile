@@ -57,7 +57,7 @@ build-php81:
 
 build-php82:
 	@echo "$$(tr -d '\r' < ./phpfpm/php82.txt)" > ./phpfpm/php82.txt
-	docker buildx build --platform linux/amd64 --no-cache --build-arg PHP_VERSION=8.2 --build-arg PHP_PACKAGES="$$(cat ./phpfpm/php82.txt)" -t ${REPO}nhsl-ubuntu-phpv2:8.2-${TAG} -f ./phpfpm/Dockerfile ./phpfpm/
+	docker build --no-cache --build-arg PHP_VERSION=8.2 --build-arg PHP_PACKAGES="$$(cat ./phpfpm/php82.txt)" -t ${REPO}nhsl-ubuntu-phpv2:8.2-${TAG} -f ./phpfpm/Dockerfile ./phpfpm/
 
 test-php72:
 	@echo "$$(tr -d '\r' < ./phpfpm/php72.txt)" > ./phpfpm/php72.txt
