@@ -66,4 +66,28 @@ server {
     	root /usr/local/openresty/nginx/html;
     	internal;
     }
+
+    # Block access to dot files except the .well-known directory
+	location ~* /\.(?!well-known\/) {
+        deny all;
+		return 404;
+    }
+
+	# Unlikely to have these but block access to certain filetypes
+	location ~* (?:\.(?:bak|conf|yaml|yml|cfg|fla|in[ci]|log|psd|sh|sql)|~)$ {
+        deny all;
+		return 404;
+    }
+
+	# Block access to composer files
+	location ~* composer\.(?:json|lock) {
+        deny all;
+		return 404;
+    }
+
+	# Block certain directories
+	location ~ /(vendor|behat|node_modules) {
+        deny all;
+        return 404;
+	}
 }
