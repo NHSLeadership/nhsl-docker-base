@@ -18,6 +18,7 @@ help:
 	@echo "    build-php74		Builds a PHP 7.4 image"
 	@echo "    build-php80		Builds a PHP 8.0 image"
 	@echo "    build-php81		Builds a PHP 8.1 image"
+	@echo "    build-php82		Builds a PHP 8.2 image"
 	@echo ""
 	@echo "!! Test containers will be available at http://localhost:8080 once running."
 	@echo "    test-php72		Builds and runs a Docker stack on port 8080 to test PHP 7.2"
@@ -25,10 +26,11 @@ help:
 	@echo "    test-php74		Builds and runs a Docker stack on port 8080 to test PHP 7.4"
 	@echo "    test-php80		Builds and runs a Docker stack on port 8080 to test PHP 8.0"
 	@echo "    test-php81		Builds and runs a Docker stack on port 8080 to test PHP 8.1"
+	@echo "    test-php82		Builds and runs a Docker stack on port 8080 to test PHP 8.2"
 	@echo ""
 
 build-all:
-	build-openresty build-php72 build-php73 build-php74 build-php80 build-php81
+	build-openresty build-php72 build-php73 build-php74 build-php80 build-php81 build-php82
 
 build-openresty:
 	docker build -t ${REPO}nhsl-ubuntu-openresty:${TAG} -f ./openresty/Dockerfile ./openresty/
@@ -53,6 +55,10 @@ build-php81:
 	@echo "$$(tr -d '\r' < ./phpfpm/php81.txt)" > ./phpfpm/php81.txt
 	docker build --no-cache --build-arg PHP_VERSION=8.1 --build-arg PHP_PACKAGES="$$(cat ./phpfpm/php81.txt)" -t ${REPO}nhsl-ubuntu-phpv2:8.1-${TAG} -f ./phpfpm/Dockerfile ./phpfpm/
 
+build-php82:
+	@echo "$$(tr -d '\r' < ./phpfpm/php82.txt)" > ./phpfpm/php82.txt
+	docker buildx build --platform linux/amd64 --no-cache --build-arg PHP_VERSION=8.2 --build-arg PHP_PACKAGES="$$(cat ./phpfpm/php82.txt)" -t ${REPO}nhsl-ubuntu-phpv2:8.2-${TAG} -f ./phpfpm/Dockerfile ./phpfpm/
+
 test-php72:
 	@echo "$$(tr -d '\r' < ./phpfpm/php72.txt)" > ./phpfpm/php72.txt
 	env phpmods="$$(cat ./phpfpm/php72.txt)" env phpvers=7.2 docker-compose -f tests/docker-compose.yml up --build --force-recreate
@@ -72,3 +78,7 @@ test-php80:
 test-php81:
 	@echo "$$(tr -d '\r' < ./phpfpm/php81.txt)" > ./phpfpm/php81.txt
 	env phpmods="$$(cat ./phpfpm/php81.txt)" env phpvers=8.1 docker-compose -f tests/docker-compose.yml up --build --force-recreate
+
+test-php82:
+	@echo "$$(tr -d '\r' < ./phpfpm/php82.txt)" > ./phpfpm/php82.txt
+	env phpmods="$$(cat ./phpfpm/php82.txt)" env phpvers=8.2 docker-compose -f tests/docker-compose.yml up --build --force-recreate

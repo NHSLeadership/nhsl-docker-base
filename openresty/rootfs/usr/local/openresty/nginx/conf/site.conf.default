@@ -74,7 +74,7 @@ server {
     }
 
 	# Unlikely to have these but block access to certain filetypes
-	location ~* (?:\.(?:bak|conf|yaml|yml|cfg|fla|in[ci]|log|psd|sh|sql)|~)$ {
+	location ~* (?:\.(?:bak|dist|conf|yaml|yml|cfg|fla|in[ci]|log|psd|sh|sql)|~)$ {
         deny all;
 		return 404;
     }
@@ -86,7 +86,7 @@ server {
     }
 
 	# Block certain directories
-	location ~ /(vendor|behat|node_modules) {
+	location ~* (vendor|behat|node_modules|readme(.*)|README|(.*).md|upgrade.txt|UPGRADE|phpunit.xml) {
         deny all;
         return 404;
 	}
