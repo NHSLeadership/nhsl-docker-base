@@ -324,7 +324,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             PHP_VERSION=8.2
-            PHP_PACKAGES=${{ env.PHP81MODS }}
+            PHP_PACKAGES=${{ env.PHP82MODS }}
 
       - name: Trivy scan PHP 8.2 image
         uses: aquasecurity/trivy-action@master
