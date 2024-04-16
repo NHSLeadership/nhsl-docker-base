@@ -1,14 +1,14 @@
 # Base Docker Images
 
-> Clean and functional base images providing PHP versions 7.2 to 8.1 and OpenResty web server.
+> Clean and functional base images providing PHP versions 7.2 to 8.3 and OpenResty web server.
 >
 > By NHS Leadership Academy
 
-This repository provides two images, one containing PHP-FPM (also able to run cron) and another running OpenResty. They are designed to be used together in a single Kubernetes pod to support our own web applications.
+This repository provides two images; one containing PHP-FPM (able to run either as a fastcgi server or cron/worker) and another running Openresty. They are designed to be used together in a single Kubernetes pod to support our own web applications. We generally run these in rootless environments with read-only root filesystems.
 
 ## Rationale
 
-We use Kubernetes to make the most of our infrastructure. The majority of our applications (~90%) are built on PHP and so it made sense to create base images providing a standard build to run our applications from. In keeping with Kubernetes best practice we moved to an architecture running PHP-FPM in a separate container to the OpenResty web server within the same pod.
+We use Kubernetes to make the most of our infrastructure. The majority of our applications are built on PHP and so it made sense to create base images providing a standard build to run our applications from. In keeping with Kubernetes best practice we moved to an architecture running PHP-FPM in a separate container to the Openresty web server within the same pod.
 
 In future it would be nice to split PHP-FPM and OpenResty into separately scalable pods, but this poses issues when both services need access to the same application data. Within a pod this is easily solved using emptyDir volumes with little performance impact whereas with separate pods we would need shared storage (AWS EFS) which is slower and more awkward to manage application code in.
 

@@ -19,6 +19,7 @@ help:
 	@echo "    build-php80		Builds a PHP 8.0 image"
 	@echo "    build-php81		Builds a PHP 8.1 image"
 	@echo "    build-php82		Builds a PHP 8.2 image"
+	@echo "    build-php82		Builds a PHP 8.3 image"
 	@echo ""
 	@echo "!! Test containers will be available at http://localhost:8080 once running."
 	@echo "    test-php72		Builds and runs a Docker stack on port 8080 to test PHP 7.2"
@@ -27,6 +28,7 @@ help:
 	@echo "    test-php80		Builds and runs a Docker stack on port 8080 to test PHP 8.0"
 	@echo "    test-php81		Builds and runs a Docker stack on port 8080 to test PHP 8.1"
 	@echo "    test-php82		Builds and runs a Docker stack on port 8080 to test PHP 8.2"
+	@echo "    test-php83		Builds and runs a Docker stack on port 8080 to test PHP 8.3"
 	@echo ""
 
 build-all:
@@ -59,6 +61,10 @@ build-php82:
 	@echo "$$(tr -d '\r' < ./phpfpm/php82.txt)" > ./phpfpm/php82.txt
 	docker build --no-cache --build-arg PHP_VERSION=8.2 --build-arg PHP_PACKAGES="$$(cat ./phpfpm/php82.txt)" -t ${REPO}nhsl-ubuntu-phpv2:8.2-${TAG} -f ./phpfpm/Dockerfile ./phpfpm/
 
+build-php83:
+	@echo "$$(tr -d '\r' < ./phpfpm/php83.txt)" > ./phpfpm/php83.txt
+	docker build --no-cache --build-arg PHP_VERSION=8.3 --build-arg PHP_PACKAGES="$$(cat ./phpfpm/php83.txt)" -t ${REPO}nhsl-ubuntu-phpv2:8.3-${TAG} -f ./phpfpm/Dockerfile ./phpfpm/
+
 test-php72:
 	@echo "$$(tr -d '\r' < ./phpfpm/php72.txt)" > ./phpfpm/php72.txt
 	env phpmods="$$(cat ./phpfpm/php72.txt)" env phpvers=7.2 docker-compose -f tests/docker-compose.yml up --build --force-recreate
@@ -82,3 +88,7 @@ test-php81:
 test-php82:
 	@echo "$$(tr -d '\r' < ./phpfpm/php82.txt)" > ./phpfpm/php82.txt
 	env phpmods="$$(cat ./phpfpm/php82.txt)" env phpvers=8.2 docker-compose -f tests/docker-compose.yml up --build --force-recreate
+
+test-php83:
+	@echo "$$(tr -d '\r' < ./phpfpm/php83.txt)" > ./phpfpm/php83.txt
+	env phpmods="$$(cat ./phpfpm/php83.txt)" env phpvers=8.3 docker-compose -f tests/docker-compose.yml up --build --force-recreate
