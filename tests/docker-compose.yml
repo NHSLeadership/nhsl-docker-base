@@ -2,38 +2,103 @@ version: '3.6'
 services:
   openresty:
     container_name: openresty
+    read_only: true
     build:
-      context: ./openresty/
+      context: ../openresty/
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+      - "9145:9145"
+      - "9253:9253"
     volumes:
-      - ./app/:/app/public/
       - ./shared-app-openresty.conf:/etc/openresty/site.conf
+      - ./app/:/app/public/
       - app-shared:/app-shared
+      - web-run:/var/run
+      - web-tmp:/tmp
+      - web-nhsla:/nhsla/etc
     environment:
       AWS_HOST_ENVIRONMENT: "true"
 
+
   phpfpm:
     container_name: phpfpm
+    read_only: true
     build:
-      context: ./phpfpm/
+      context: ../phpfpm/
       dockerfile: Dockerfile
       args:
         PHP_VERSION: ${phpvers}
         PHP_PACKAGES: |-
           ${phpmods}
-    network_mode: "container:openresty"
+    network_mode: "service:openresty"
     volumes:
       - ./app/:/app/public/
       - app-shared:/app-shared
+      - web-run:/var/run
+      - web-tmp:/tmp
+      - web-nhsla:/nhsla/etc
     depends_on:
       - openresty
     environment:
       AWS_HOST_ENVIRONMENT: "true"
 
+  cron:
+    container_name: cron
+    read_only: true
+    build:
+      context: ../phpfpm/
+      dockerfile: Dockerfile
+      args:
+        PHP_VERSION: ${phpvers}
+        PHP_PACKAGES: |-
+          ${phpmods}
+    network_mode: "service:openresty"
+    volumes:
+      - ./app/:/app/public/
+      - ./cron:/nhsla/cron
+      - app-shared:/app-shared
+      - cron-run:/var/run
+      - cron-tmp:/tmp
+      - cron-nhsla:/nhsla/etc
+    depends_on:
+      - openresty
+    environment:
+      AWS_HOST_ENVIRONMENT: "true"
+      ROLE: "CRON"
+
 volumes:
   app-shared:
+    driver_opts:
+      type: tmpfs
+      o: "size=1g"
+      device: tmpfs
+  web-nhsla:
+    driver_opts:
+      type: tmpfs
+      o: "size=1g"
+      device: tmpfs
+  web-run:
+    driver_opts:
+      type: tmpfs
+      o: "size=1g"
+      device: tmpfs
+  web-tmp:
+    driver_opts:
+      type: tmpfs
+      o: "size=1g"
+      device: tmpfs
+  cron-nhsla:
+    driver_opts:
+      type: tmpfs
+      o: "size=1g"
+      device: tmpfs
+  cron-run:
+    driver_opts:
+      type: tmpfs
+      o: "size=1g"
+      device: tmpfs
+  cron-tmp:
     driver_opts:
       type: tmpfs
       o: "size=1g"

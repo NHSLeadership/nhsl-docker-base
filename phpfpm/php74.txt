@@ -21,7 +21,6 @@ php7.4-bcmath
 php7.4-calendar
 php7.4-gettext
 php7.4-json
-php7.4-apcu
 php7.4-phar
 php7.4-sockets
 php7.4-tidy

@@ -20,6 +20,8 @@ ENV S6_OVERLAY_NOARCH=https://github.com/just-containers/s6-overlay/releases/dow
     S6_LOGGING=0 \
     PHP_VERSION=$PHP_VERSION
 
+COPY --chown=1000:1000 /rootfs/ /
+
 RUN apt-get update \
   && apt-get install \
     busybox-static \
@@ -40,17 +42,16 @@ RUN apt-get update \
   && curl -L "$S6_OVERLAY_NOARCH" --output /tmp/s6-overlay-noarch.tar.xz \
   && curl -L "$S6_OVERLAY_AMD64" --output /tmp/s6-overlay-amd64.tar.xz \
   && tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz \
-  && tar -C / -Jxpf /tmp/s6-overlay-amd64.tar.xz
-  && rm -rf tmp/* \
+  && tar -C / -Jxpf /tmp/s6-overlay-amd64.tar.xz \
+  && rm -rf /tmp/* \
   && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 4F4EA0AAE5267A6C \
   && echo "deb http://ppa.launchpad.net/ondrej/php/ubuntu jammy main" \
     | tee /etc/apt/sources.list.d/ondrej.list \
   && apt-get update \
-  && apt-get install -y ${PHP_PACKAGES} && rm -rf /var/lib/apt/lists/* \
-  ## Adds in PHP-FPM Prometheus metrics scraper
-  ## TODO: Disabled April 2023 until we actually use PHP metrics for something meaningful.
-  ## && curl -L "$METRICS_URL" --output /usr/local/bin/php-fpm_exporter \
-  ## && chmod +x /usr/local/bin/php-fpm_exporter \
+  && apt-get install --no-install-recommends -y ${PHP_PACKAGES} && rm -rf /var/lib/apt/lists/* \
+  ## Add PHP-FPM Prometheus exporter
+  && curl -L "$METRICS_URL" --output /usr/local/bin/php-fpm_exporter \
+  && chmod +x /usr/local/bin/php-fpm_exporter \
   ## Add PHP-FPM Health check script
   && curl "$HEALTHCHECK_URL" --output /usr/local/bin/php-fpm-healthcheck \
   && chmod +x /usr/local/bin/php-fpm-healthcheck \
@@ -63,7 +64,7 @@ RUN apt-get update \
     && echo "deb https://s3.amazonaws.com/atatus-artifacts/atatus-php/debian stable main" \
       | tee -a /etc/apt/sources.list.d/atatus-php-agent.list \
     && apt-get update \
-    && apt-get install atatus-php-agent -y && rm -rf /var/lib/apt/lists/* \
+    && apt-get install --no-install-recommends atatus-php-agent -y && rm -rf /var/lib/apt/lists/* \
   && apt-get remove -y --purge gnupg \
   && useradd --create-home --shell /bin/bash --uid 1000 nhsla \
   && mkdir -p /app/public \
@@ -88,6 +89,8 @@ RUN apt-get update \
   && ln -s /nhsla/etc/php.ini /etc/php/${PHP_VERSION}/fpm/php.ini \
   && ln -s /nhsla/etc/www.conf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
   && ln -s /nhsla/etc/atatus.ini /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini \
+  && ln -s /etc/php/fpm /etc/php/${PHP_VERSION}/fpm \
+  && ln -s /etc/php/cli /etc/php/${PHP_VERSION}/cli \
   && rm -rf /etc/ssmtp/ssmtp.conf \
   && ln -s /nhsla/etc/ssmtp.conf /etc/ssmtp/ssmtp.conf \
   && curl -fsSLO "$SUPERCRONIC_URL" \
@@ -95,10 +98,9 @@ RUN apt-get update \
   && chmod +x "$SUPERCRONIC" \
   && mv "$SUPERCRONIC" "/usr/local/bin/${SUPERCRONIC}" \
   && ln -s "/usr/local/bin/${SUPERCRONIC}" /usr/local/bin/supercronic \
+  && chmod +x /etc/cont-init.d/01-boot.sh \
+  && chmod +x /etc/cont-init.d/02-setup.sh \
   && date > /image_base_build_date
-
-
-COPY --chown=1000:1000 /rootfs/ /
 
 USER 1000:1000
 
