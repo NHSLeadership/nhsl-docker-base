@@ -39,8 +39,8 @@ RUN apt-get update \
     zip \
     xz-utils \
     -y && rm -rf /var/lib/apt/lists/* \
-  && curl -L "$S6_OVERLAY_NOARCH" --output /tmp/s6-overlay-noarch.tar.xz \
-  && curl -L "$S6_OVERLAY_AMD64" --output /tmp/s6-overlay-amd64.tar.xz \
+  && curl --proto "=https" --tlsv1.3 -L "$S6_OVERLAY_NOARCH" --output /tmp/s6-overlay-noarch.tar.xz \
+  && curl --proto "=https" --tlsv1.3 -L "$S6_OVERLAY_AMD64" --output /tmp/s6-overlay-amd64.tar.xz \
   && tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz \
   && tar -C / -Jxpf /tmp/s6-overlay-amd64.tar.xz \
   && rm -rf /tmp/* \
@@ -50,17 +50,17 @@ RUN apt-get update \
   && apt-get update \
   && apt-get install --no-install-recommends -y ${PHP_PACKAGES} && rm -rf /var/lib/apt/lists/* \
   ## Add PHP-FPM Prometheus exporter
-  && curl -L "$METRICS_URL" --output /usr/local/bin/php-fpm_exporter \
+  && curl --proto "=https" --tlsv1.3 -L "$METRICS_URL" --output /usr/local/bin/php-fpm_exporter \
   && chmod +x /usr/local/bin/php-fpm_exporter \
   ## Add PHP-FPM Health check script
-  && curl "$HEALTHCHECK_URL" --output /usr/local/bin/php-fpm-healthcheck \
+  && curl --proto "=https" --tlsv1.3 "$HEALTHCHECK_URL" --output /usr/local/bin/php-fpm-healthcheck \
   && chmod +x /usr/local/bin/php-fpm-healthcheck \
   ## Add global Composer
-  && curl -sS https://getcomposer.org/installer | php \
+  && curl --proto "=https" --tlsv1.3 -sS https://getcomposer.org/installer | php \
     && mv composer.phar /usr/local/bin/composer \
     && chmod a+x /usr/local/bin/composer \
   ## Add Atatus GPG key and repo
-  && curl https://s3.amazonaws.com/atatus-artifacts/gpg/atatus.gpg | apt-key add - \
+  && curl --proto "=https" --tlsv1.3 https://s3.amazonaws.com/atatus-artifacts/gpg/atatus.gpg | apt-key add - \
     && echo "deb https://s3.amazonaws.com/atatus-artifacts/atatus-php/debian stable main" \
       | tee -a /etc/apt/sources.list.d/atatus-php-agent.list \
     && apt-get update \
@@ -93,7 +93,7 @@ RUN apt-get update \
   && ln -s /etc/php/cli /etc/php/${PHP_VERSION}/cli \
   && rm -rf /etc/ssmtp/ssmtp.conf \
   && ln -s /nhsla/etc/ssmtp.conf /etc/ssmtp/ssmtp.conf \
-  && curl -fsSLO "$SUPERCRONIC_URL" \
+  && curl --proto "=https" --tlsv1.3 -fsSLO "$SUPERCRONIC_URL" \
   && echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - \
   && chmod +x "$SUPERCRONIC" \
   && mv "$SUPERCRONIC" "/usr/local/bin/${SUPERCRONIC}" \

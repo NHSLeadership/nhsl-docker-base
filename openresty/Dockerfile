@@ -19,12 +19,12 @@ RUN apt-get update \
      gnupg \
      xz-utils \
      --no-install-recommends -y \
-  && curl -L "$S6_OVERLAY_NOARCH" --output /tmp/s6-overlay-noarch.tar.xz \
-  && curl -L "$S6_OVERLAY_AMD64" --output /tmp/s6-overlay-amd64.tar.xz \
+  && curl --proto "=https" --tlsv1.3 -L "$S6_OVERLAY_NOARCH" --output /tmp/s6-overlay-noarch.tar.xz \
+  && curl --proto "=https" --tlsv1.3 -L "$S6_OVERLAY_AMD64" --output /tmp/s6-overlay-amd64.tar.xz \
   && tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz \
   && tar -C / -Jxpf /tmp/s6-overlay-amd64.tar.xz \
   && rm -rf /tmp/* \
-  && curl -L https://openresty.org/package/pubkey.gpg | apt-key add - \
+  && curl --proto "=https" --tlsv1.3 -L https://openresty.org/package/pubkey.gpg | apt-key add - \
   && echo "deb http://openresty.org/package/ubuntu jammy main" \
      | tee /etc/apt/sources.list.d/openresty.list \
   && apt-get update \
