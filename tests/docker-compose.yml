@@ -14,7 +14,7 @@ services:
       - ./shared-app-openresty.conf:/etc/openresty/site.conf
       - ./app/:/app/public/
       - app-shared:/app-shared
-      - web-run:/var/run
+      - web-run:/run
       - web-tmp:/tmp
       - web-nhsla:/nhsla/etc
     environment:
@@ -35,7 +35,7 @@ services:
     volumes:
       - ./app/:/app/public/
       - app-shared:/app-shared
-      - web-run:/var/run
+      - web-run:/run
       - web-tmp:/tmp
       - web-nhsla:/nhsla/etc
     depends_on:
@@ -58,7 +58,7 @@ services:
       - ./app/:/app/public/
       - ./cron:/nhsla/cron
       - app-shared:/app-shared
-      - cron-run:/var/run
+      - cron-run:/run
       - cron-tmp:/tmp
       - cron-nhsla:/nhsla/etc
     depends_on:
