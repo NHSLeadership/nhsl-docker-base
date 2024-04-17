@@ -29,7 +29,7 @@ Images are currently built and pushed to GitHub's container registry. Available 
 
 - These images have been built to run as the `nhsla` user with uid/gid `1000`.
 - These images assume they are running with a read-only root filesystem.
-- Writable volumes should be mounted at **/nhsla/etc**, **/var/run**, and **/tmp** otherwise the containers will fail to start. We use Kubernetes emptyDir volumes for this.
+- Writable volumes should be mounted at **/nhsla/etc**, **/run**, and **/tmp** otherwise the containers will fail to start. We use Kubernetes emptyDir volumes for this.
 
 ## Cron
 
@@ -52,7 +52,7 @@ We no longer use a long list of runtime variables to do this - instead we simply
 You may wish to override the following configuration files with ConfigMaps or a layered image build:
 
 **Openresty:**
-Openresty (Nginx compatible): `/usr/local/openresty/nginx/conf/nginx.conf`
+Openresty config (Nginx compatible): `/usr/local/openresty/nginx/conf/nginx.conf`
 Openresty default site: `/user/local/openresty/nginx/conf/site.conf`
 
 **PHP-FPM**:
@@ -136,16 +136,7 @@ Each container starts up using Docker's Entryfile directive. This calls the scri
 
 If the `AWS_HOST_ENVIRONMENT` environment variable exists we assume the two images are running inside a Kubernetes Pod together and application code is copied from `/app` into a shared emptyDir volume at `/app-shared`.
 
-Each container looks for a relevant startup script. If found it will be executed last but before the services are started:
-
-| Path               | Runs on                   | Priority |
-| ------------------ | ------------------------- | -------- |
-| /nhsla/scripts/startup-all.sh    | All containers            | 1        |
-| /nhsla/scripts/startup-web.sh    | OpenResty only            | 2        |
-| /nhsla/scripts/startup-php.sh    | PHP-FPM only, not workers | 2        |
-| /nhsla/scripts/startup-worker.sh | PHP-FPM workers only      | 3        |
-
-In the case you have mixed scripts where multiple may run in a single container then scripts are executed from lowest priority number first to highest (i.e. 1, then 2, then 3).
+Scripts should be placed into `/etc/cont-int.d`in the format `03-script.sh`. 01 and 02 are used for initial setup. You may use the ROLE environment variable to limit scripts to run on different containers.
 
 ## A note on ReadOnlyRootFileSystem
 
