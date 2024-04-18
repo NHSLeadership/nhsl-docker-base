@@ -1,4 +1,4 @@
-#!/usr/bin/with-contenv bash
+#!/command/with-contenv bash
 
 #####
 # Email relay configuration
@@ -11,11 +11,28 @@ if [ -z "$MAIL_PORT" ]; then
     export MAIL_PORT=25
 fi
 
+if [ -z "$MAIL_ROOT" ]; then
+    export MAIL_ROOT=devops@nhsx.uk
+fi
+
 echo "mailhub=$MAIL_HOST:$MAIL_PORT" >> /nhsla/etc/ssmtp.conf
-echo "root=devops@nhsx.uk" >> /nhsla/etc/ssmtp.conf
+echo "root=$MAIL_ROOT" >> /nhsla/etc/ssmtp.conf
 echo "FromLineOverride=YES" >> /nhsla/etc/ssmtp.conf
 sed -i -e "s|;sendmail_path =|sendmail_path = /usr/sbin/ssmtp -t|g" /nhsla/etc/php.ini
 #####
+
+#####
+# Email relay configuration
+#####
+if [ -n "$REDIS_SESSIONS" ]; then
+    if [ -z "$REDIS_HOST" ]; then
+      export REDIS_HOST="redis:6379"
+    fi
+    sed -i -e "s|session.save_handler = files|session.save_handler = redis|g" /nhsla/etc/php.ini
+    sed -i -e "s|session.save_path = "/tmp"|session.save_path = \"tcp://$REDIS_HOST\"|g" /nhsla/etc/php.ini
+fi
+
+####
 
 #####
 # Atatus configuration

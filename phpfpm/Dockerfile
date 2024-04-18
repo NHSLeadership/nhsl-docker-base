@@ -4,17 +4,23 @@ LABEL maintainer="devops@nhsx.uk"
 ARG PHP_VERSION
 ARG PHP_PACKAGES
 ARG DEBIAN_FRONTEND=noninteractive
+
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-ENV METRICS_URL=https://github.com/hipages/php-fpm_exporter/releases/download/v2.2.0/php-fpm_exporter_2.2.0_linux_amd64 \
+ENV S6_OVERLAY_NOARCH=https://github.com/just-containers/s6-overlay/releases/download/v3.1.6.2/s6-overlay-noarch.tar.xz \
+    S6_OVERLAY_AMD64=https://github.com/just-containers/s6-overlay/releases/download/v3.1.6.2/s6-overlay-x86_64.tar.xz \
+    METRICS_URL=https://github.com/hipages/php-fpm_exporter/releases/download/v2.2.0/php-fpm_exporter_2.2.0_linux_amd64 \
     HEALTHCHECK_URL=https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck \
-    SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.1/supercronic-linux-amd64 \
+    SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.29/supercronic-linux-amd64 \
     SUPERCRONIC=supercronic-linux-amd64 \
-    SUPERCRONIC_SHA1SUM=d7f4c0886eb85249ad05ed592902fa6865bb9d70 \
+    SUPERCRONIC_SHA1SUM=cd48d45c4b10f3f0bfdd3a57d054cd05ac96812b \
+    S6_KEEP_ENV=1 \
     S6_FIX_ATTRS_HIDDEN=1 \
     S6_READ_ONLY_ROOT=1 \
     S6_KEEP_ENV=1 \
     S6_LOGGING=0 \
     PHP_VERSION=$PHP_VERSION
+
+COPY --chown=1000:1000 /rootfs/ /
 
 RUN apt-get update \
   && apt-get install \
@@ -33,31 +39,32 @@ RUN apt-get update \
     zip \
     xz-utils \
     -y && rm -rf /var/lib/apt/lists/* \
-  && curl -L https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.3/s6-overlay-amd64-installer --output /tmp/s6-overlay-amd64-installer \
-  && chmod +x /tmp/s6-overlay-amd64-installer && /tmp/s6-overlay-amd64-installer / \
-  && rm -rf tmp/* \
+  && curl --proto "=https" --tlsv1.3 -L "$S6_OVERLAY_NOARCH" --output /tmp/s6-overlay-noarch.tar.xz \
+  && curl --proto "=https" --tlsv1.3 -L "$S6_OVERLAY_AMD64" --output /tmp/s6-overlay-amd64.tar.xz \
+  && tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz \
+  && tar -C / -Jxpf /tmp/s6-overlay-amd64.tar.xz \
+  && rm -rf /tmp/* \
   && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 4F4EA0AAE5267A6C \
   && echo "deb http://ppa.launchpad.net/ondrej/php/ubuntu jammy main" \
     | tee /etc/apt/sources.list.d/ondrej.list \
   && apt-get update \
-  && apt-get install -y ${PHP_PACKAGES} && rm -rf /var/lib/apt/lists/* \
-  ## Adds in PHP-FPM Prometheus metrics scraper
-  ## TODO: Disabled April 2023 until we actually use PHP metrics for something meaningful.
-  ## && curl -L "$METRICS_URL" --output /usr/local/bin/php-fpm_exporter \
-  ## && chmod +x /usr/local/bin/php-fpm_exporter \
+  && apt-get install --no-install-recommends -y ${PHP_PACKAGES} && rm -rf /var/lib/apt/lists/* \
+  ## Add PHP-FPM Prometheus exporter
+  && curl --proto "=https" --tlsv1.3 -L "$METRICS_URL" --output /usr/local/bin/php-fpm_exporter \
+  && chmod +x /usr/local/bin/php-fpm_exporter \
   ## Add PHP-FPM Health check script
-  && curl "$HEALTHCHECK_URL" --output /usr/local/bin/php-fpm-healthcheck \
+  && curl --proto "=https" --tlsv1.3 "$HEALTHCHECK_URL" --output /usr/local/bin/php-fpm-healthcheck \
   && chmod +x /usr/local/bin/php-fpm-healthcheck \
   ## Add global Composer
-  && curl -sS https://getcomposer.org/installer | php \
+  && curl --proto "=https" --tlsv1.3 -sS https://getcomposer.org/installer | php \
     && mv composer.phar /usr/local/bin/composer \
     && chmod a+x /usr/local/bin/composer \
   ## Add Atatus GPG key and repo
-  && curl https://s3.amazonaws.com/atatus-artifacts/gpg/atatus.gpg | apt-key add - \
+  && curl --proto "=https" --tlsv1.3 https://s3.amazonaws.com/atatus-artifacts/gpg/atatus.gpg | apt-key add - \
     && echo "deb https://s3.amazonaws.com/atatus-artifacts/atatus-php/debian stable main" \
       | tee -a /etc/apt/sources.list.d/atatus-php-agent.list \
     && apt-get update \
-    && apt-get install atatus-php-agent -y && rm -rf /var/lib/apt/lists/* \
+    && apt-get install --no-install-recommends atatus-php-agent -y && rm -rf /var/lib/apt/lists/* \
   && apt-get remove -y --purge gnupg \
   && useradd --create-home --shell /bin/bash --uid 1000 nhsla \
   && mkdir -p /app/public \
@@ -82,17 +89,18 @@ RUN apt-get update \
   && ln -s /nhsla/etc/php.ini /etc/php/${PHP_VERSION}/fpm/php.ini \
   && ln -s /nhsla/etc/www.conf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
   && ln -s /nhsla/etc/atatus.ini /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini \
+  && ln -s /etc/php/fpm /etc/php/${PHP_VERSION}/fpm \
+  && ln -s /etc/php/cli /etc/php/${PHP_VERSION}/cli \
   && rm -rf /etc/ssmtp/ssmtp.conf \
   && ln -s /nhsla/etc/ssmtp.conf /etc/ssmtp/ssmtp.conf \
-  && curl -fsSLO "$SUPERCRONIC_URL" \
+  && curl --proto "=https" --tlsv1.3 -fsSLO "$SUPERCRONIC_URL" \
   && echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - \
   && chmod +x "$SUPERCRONIC" \
   && mv "$SUPERCRONIC" "/usr/local/bin/${SUPERCRONIC}" \
   && ln -s "/usr/local/bin/${SUPERCRONIC}" /usr/local/bin/supercronic \
+  && chmod +x /etc/cont-init.d/01-boot.sh \
+  && chmod +x /etc/cont-init.d/02-setup.sh \
   && date > /image_base_build_date
-
-
-COPY --chown=1000:1000 /rootfs/ /
 
 USER 1000:1000
 

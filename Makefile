@@ -91,4 +91,4 @@ test-php82:
 
 test-php83:
 	@echo "$$(tr -d '\r' < ./phpfpm/php83.txt)" > ./phpfpm/php83.txt
-	env phpmods="$$(cat ./phpfpm/php83.txt)" env phpvers=8.3 docker-compose -f tests/docker-compose.yml up --build --force-recreate
+	env phpmods="$$(cat ./phpfpm/php83.txt)" env phpvers=8.3 docker compose -f tests/docker-compose.yml up --build --force-recreate

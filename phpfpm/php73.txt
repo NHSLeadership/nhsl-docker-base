@@ -21,7 +21,6 @@ php7.3-bcmath
 php7.3-calendar
 php7.3-gettext
 php7.3-json
-php7.3-apcu
 php7.3-phar
 php7.3-sockets
 php7.3-tidy
