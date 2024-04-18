@@ -14,7 +14,7 @@ services:
       - ./shared-app-openresty.conf:/etc/openresty/site.conf
       - ./app/:/app/public/
       - app-shared:/app-shared
-      - web-run:/run
+      - openresty-run:/run
       - web-tmp:/tmp
       - web-nhsla:/nhsla/etc
     environment:
@@ -69,6 +69,11 @@ services:
 
 volumes:
   app-shared:
+    driver_opts:
+      type: tmpfs
+      o: "size=1g"
+      device: tmpfs
+  openresty-run:
     driver_opts:
       type: tmpfs
       o: "size=1g"
