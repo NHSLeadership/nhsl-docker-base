@@ -56,7 +56,7 @@ RUN apt-get update \
   && curl --proto "=https" --tlsv1.3 "$HEALTHCHECK_URL" --output /usr/local/bin/php-fpm-healthcheck \
   && chmod +x /usr/local/bin/php-fpm-healthcheck \
   ## Add global Composer
-  && curl --proto "=https" --tlsv1.3 -sS https://getcomposer.org/installer | php \
+  && curl --proto "=https" --tlsv1.2 -sS https://getcomposer.org/installer | php \
     && mv composer.phar /usr/local/bin/composer \
     && chmod a+x /usr/local/bin/composer \
   ## Add Atatus GPG key and repo
@@ -86,13 +86,13 @@ RUN apt-get update \
   && rm -rf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
   && rm -rf /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini \
   && rm -rf /etc/php/${PHP_VERSION}/cli/conf.d/20-atatus.ini \
-  && ln -s /nhsla/setup/php.ini /etc/php/${PHP_VERSION}/fpm/php.ini \
-  && ln -s /nhsla/setup/www.conf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
-  && ln -s /nhsla/setup/atatus.ini /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini \
-  && ln -s /etc/php/fpm /etc/php/${PHP_VERSION}/fpm \
-  && ln -s /etc/php/cli /etc/php/${PHP_VERSION}/cli \
+  && ln -s /nhsla/etc/php.ini /etc/php/${PHP_VERSION}/fpm/php.ini \
+  && ln -s /nhsla/etc/www.conf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
+  && ln -s /nhsla/etc/atatus.ini /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini \
+  && ln -s /etc/php/${PHP_VERSION}/fpm /etc/php/fpm \
+  && ln -s /etc/php/${PHP_VERSION}/cli /etc/php/cli \
   && rm -rf /etc/ssmtp/ssmtp.conf \
-  && ln -s /nhsla/setup/ssmtp.conf /etc/ssmtp/ssmtp.conf \
+  && ln -s /nhsla/etc/ssmtp.conf /etc/ssmtp/ssmtp.conf \
   && curl --proto "=https" --tlsv1.3 -fsSLO "$SUPERCRONIC_URL" \
   && echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - \
   && chmod +x "$SUPERCRONIC" \
