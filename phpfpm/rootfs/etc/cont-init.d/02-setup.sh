@@ -29,7 +29,7 @@ if [ -n "$REDIS_SESSIONS" ]; then
       export REDIS_HOST="redis:6379"
     fi
     sed -i -e "s|session.save_handler = files|session.save_handler = redis|g" /nhsla/etc/php.ini
-    sed -i -e "s|session.save_path = "/tmp"|session.save_path = \"tcp://$REDIS_HOST\"|g" /nhsla/etc/php.ini
+    sed -i -e "s|session.save_path = \"/tmp\"|session.save_path = \"tcp://$REDIS_HOST\"|g" /nhsla/etc/php.ini
 fi
 
 ####
