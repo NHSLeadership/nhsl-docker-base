@@ -28,6 +28,13 @@ if [ -n "$REDIS_SESSIONS" ]; then
     if [ -z "$REDIS_HOST" ]; then
       export REDIS_HOST="redis:6379"
     fi
+    # If the redis host doesn't have a port then append
+    # the default of 6379 for PHP's Redis use.
+    if [ -n "$REDIS_HOST" ]; then
+      if [[ "$REDIS_HOST" != *":"* ]]; then
+        REDIS_HOST="${REDIS_HOST}:6379"
+      fi
+    fi
     sed -i -e "s|session.save_handler = files|session.save_handler = redis|g" /nhsla/etc/php.ini
     sed -i -e "s|session.save_path = \"/tmp\"|session.save_path = \"tcp://$REDIS_HOST\"|g" /nhsla/etc/php.ini
 fi
