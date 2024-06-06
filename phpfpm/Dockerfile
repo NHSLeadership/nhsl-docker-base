@@ -18,7 +18,7 @@ ENV S6_OVERLAY_NOARCH=https://github.com/just-containers/s6-overlay/releases/dow
     S6_READ_ONLY_ROOT=1 \
     S6_KEEP_ENV=1 \
     S6_LOGGING=0 \
-    S6_CMD_WAIT_FOR_SERVICES_MAXTIME=10000 \
+    S6_CMD_WAIT_FOR_SERVICES_MAXTIME=30000 \
     PHP_VERSION=$PHP_VERSION
 
 COPY --chown=1000:1000 /rootfs/ /
