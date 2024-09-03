@@ -60,7 +60,7 @@ jobs:
           key: exporter-key
       
       - name: grab exporter artifact
-        run:
+        run: |
           mkdir -p phpfpm/rootfs/usr/local/bin/
           cp artifacts/php-fpm_exporter phpfpm/rootfs/usr/local/bin/
 
@@ -126,7 +126,7 @@ jobs:
           key: exporter-key
       
       - name: grab exporter artifact
-        run:
+        run: |
           mkdir -p phpfpm/rootfs/usr/local/bin/
           cp artifacts/php-fpm_exporter phpfpm/rootfs/usr/local/bin/
 
@@ -193,7 +193,7 @@ jobs:
           key: exporter-key
       
       - name: grab exporter artifact
-        run:
+        run: |
           mkdir -p phpfpm/rootfs/usr/local/bin/
           cp artifacts/php-fpm_exporter phpfpm/rootfs/usr/local/bin/
 
@@ -260,7 +260,7 @@ jobs:
           key: exporter-key
       
       - name: grab exporter artifact
-        run:
+        run: |
           mkdir -p phpfpm/rootfs/usr/local/bin/
           cp artifacts/php-fpm_exporter phpfpm/rootfs/usr/local/bin/
 
@@ -327,7 +327,7 @@ jobs:
           key: exporter-key
       
       - name: grab exporter artifact
-        run:
+        run: |
           mkdir -p phpfpm/rootfs/usr/local/bin/
           cp artifacts/php-fpm_exporter phpfpm/rootfs/usr/local/bin/
 
@@ -393,7 +393,7 @@ jobs:
           key: exporter-key
       
       - name: grab exporter artifact
-        run:
+        run: |
           mkdir -p phpfpm/rootfs/usr/local/bin/
           cp artifacts/php-fpm_exporter phpfpm/rootfs/usr/local/bin/
 
@@ -459,7 +459,7 @@ jobs:
           key: exporter-key
       
       - name: grab exporter artifact
-        run:
+        run: |
           mkdir -p phpfpm/rootfs/usr/local/bin/
           cp artifacts/php-fpm_exporter phpfpm/rootfs/usr/local/bin/
 
