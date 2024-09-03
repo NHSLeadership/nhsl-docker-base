@@ -28,6 +28,9 @@ jobs:
           repository: sysdiglabs/php-fpm_exporter
           path: ./phpexporter
 
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - uses: actions/setup-go@v5
         with:
           go-version: '^1.23.0'
@@ -35,13 +38,9 @@ jobs:
       - name: build php-fpm exporter
         run: |
           cd phpexporter
-          go build
           mkdir -p ../phpfpm/rootfs/usr/local/bin/
-          cp php-fpm_exporter ../phpfpm/rootfs/usr/local/bin/
+          go build -o ../phpfpm/rootfs/usr/local/bin/php-fpm_exporter
           cd ../
-
-      - name: Checkout repository
-        uses: actions/checkout@v3
 
       - name: Get lists of PHP modules to install
         run: |
@@ -100,6 +99,9 @@ jobs:
           repository: sysdiglabs/php-fpm_exporter
           path: ./phpexporter
 
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - uses: actions/setup-go@v5
         with:
           go-version: '^1.23.0'
@@ -107,13 +109,9 @@ jobs:
       - name: build php-fpm exporter
         run: |
           cd phpexporter
-          go build
           mkdir -p ../phpfpm/rootfs/usr/local/bin/
-          cp php-fpm_exporter ../phpfpm/rootfs/usr/local/bin/
+          go build -o ../phpfpm/rootfs/usr/local/bin/php-fpm_exporter
           cd ../
-
-      - name: Checkout repository
-        uses: actions/checkout@v3
 
       - name: Get lists of PHP modules to install
         run: |
@@ -173,6 +171,9 @@ jobs:
           repository: sysdiglabs/php-fpm_exporter
           path: ./phpexporter
 
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - uses: actions/setup-go@v5
         with:
           go-version: '^1.23.0'
@@ -180,13 +181,9 @@ jobs:
       - name: build php-fpm exporter
         run: |
           cd phpexporter
-          go build
           mkdir -p ../phpfpm/rootfs/usr/local/bin/
-          cp php-fpm_exporter ../phpfpm/rootfs/usr/local/bin/
+          go build -o ../phpfpm/rootfs/usr/local/bin/php-fpm_exporter
           cd ../
-
-      - name: Checkout repository
-        uses: actions/checkout@v3
 
       - name: Get lists of PHP modules to install
         run: |
@@ -246,6 +243,9 @@ jobs:
           repository: sysdiglabs/php-fpm_exporter
           path: ./phpexporter
 
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - uses: actions/setup-go@v5
         with:
           go-version: '^1.23.0'
@@ -253,13 +253,9 @@ jobs:
       - name: build php-fpm exporter
         run: |
           cd phpexporter
-          go build
           mkdir -p ../phpfpm/rootfs/usr/local/bin/
-          cp php-fpm_exporter ../phpfpm/rootfs/usr/local/bin/
+          go build -o ../phpfpm/rootfs/usr/local/bin/php-fpm_exporter
           cd ../
-
-      - name: Checkout repository
-        uses: actions/checkout@v3
 
       - name: Get lists of PHP modules to install
         run: |
@@ -319,6 +315,9 @@ jobs:
           repository: sysdiglabs/php-fpm_exporter
           path: ./phpexporter
 
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - uses: actions/setup-go@v5
         with:
           go-version: '^1.23.0'
@@ -326,13 +325,9 @@ jobs:
       - name: build php-fpm exporter
         run: |
           cd phpexporter
-          go build
           mkdir -p ../phpfpm/rootfs/usr/local/bin/
-          cp php-fpm_exporter ../phpfpm/rootfs/usr/local/bin/
+          go build -o ../phpfpm/rootfs/usr/local/bin/php-fpm_exporter
           cd ../
-
-      - name: Checkout repository
-        uses: actions/checkout@v3
 
       - name: Get lists of PHP modules to install
         run: |
@@ -391,6 +386,9 @@ jobs:
           repository: sysdiglabs/php-fpm_exporter
           path: ./phpexporter
 
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - uses: actions/setup-go@v5
         with:
           go-version: '^1.23.0'
@@ -398,13 +396,9 @@ jobs:
       - name: build php-fpm exporter
         run: |
           cd phpexporter
-          go build
           mkdir -p ../phpfpm/rootfs/usr/local/bin/
-          cp php-fpm_exporter ../phpfpm/rootfs/usr/local/bin/
+          go build -o ../phpfpm/rootfs/usr/local/bin/php-fpm_exporter
           cd ../
-
-      - name: Checkout repository
-        uses: actions/checkout@v3
 
       - name: Get lists of PHP modules to install
         run: |
@@ -463,6 +457,9 @@ jobs:
           repository: sysdiglabs/php-fpm_exporter
           path: ./phpexporter
 
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - uses: actions/setup-go@v5
         with:
           go-version: '^1.23.0'
@@ -470,13 +467,9 @@ jobs:
       - name: build php-fpm exporter
         run: |
           cd phpexporter
-          go build
           mkdir -p ../phpfpm/rootfs/usr/local/bin/
-          cp php-fpm_exporter ../phpfpm/rootfs/usr/local/bin/
+          go build -o ../phpfpm/rootfs/usr/local/bin/php-fpm_exporter
           cd ../
-
-      - name: Checkout repository
-        uses: actions/checkout@v3
 
       - name: Get lists of PHP modules to install
         run: |
