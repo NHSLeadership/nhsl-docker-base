@@ -22,9 +22,9 @@ jobs:
     steps:
       - name: create cache to store artifact
         uses: actions/cache@v4
-          with:
-            path: artifacts
-            key: exporter-key
+        with:
+          path: artifacts
+          key: exporter-key
 
       - name: checkout php-fpm_exporter repo
         uses: actions/checkout@v3
@@ -43,6 +43,7 @@ jobs:
 
   build-php72-image:
     runs-on: ubuntu-latest
+    needs: build-php-fpm-exporter
     permissions:
       contents: read
       packages: write
@@ -108,6 +109,7 @@ jobs:
 
   build-php73-image:
     runs-on: ubuntu-latest
+    needs: build-php-fpm-exporter
     permissions:
       contents: read
       packages: write
@@ -174,6 +176,7 @@ jobs:
 
   build-php74-image:
     runs-on: ubuntu-latest
+    needs: build-php-fpm-exporter
     permissions:
       contents: read
       packages: write
@@ -240,6 +243,7 @@ jobs:
 
   build-php80-image:
     runs-on: ubuntu-latest
+    needs: build-php-fpm-exporter
     permissions:
       contents: read
       packages: write
@@ -306,6 +310,7 @@ jobs:
 
   build-php81-image:
     runs-on: ubuntu-latest
+    needs: build-php-fpm-exporter
     permissions:
       contents: read
       packages: write
@@ -371,6 +376,7 @@ jobs:
 
   build-php82-image:
     runs-on: ubuntu-latest
+    needs: build-php-fpm-exporter
     permissions:
       contents: read
       packages: write
@@ -436,6 +442,7 @@ jobs:
 
   build-php83-image:
     runs-on: ubuntu-latest
+    needs: build-php-fpm-exporter
     permissions:
       contents: read
       packages: write
