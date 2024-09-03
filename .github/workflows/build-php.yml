@@ -22,6 +22,24 @@ jobs:
       security-events: write
 
     steps:
+      - name: checkout php-fpm_exporter repo
+        uses: actions/checkout@v3
+        with:
+          repository: sysdiglabs/php-fpm_exporter
+          path: ./phpexporter
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '^1.23.0'
+      
+      - name: build php-fpm exporter
+        run: |
+          cd phpexporter
+          go build
+          mkdir -p ../phpfpm/rootfs/usr/local/bin/
+          cp php-fpm_exporter ../phpfpm/rootfs/usr/local/bin/
+          cd ../
+
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -76,6 +94,24 @@ jobs:
       security-events: write
 
     steps:
+      - name: checkout php-fpm_exporter repo
+        uses: actions/checkout@v3
+        with:
+          repository: sysdiglabs/php-fpm_exporter
+          path: ./phpexporter
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '^1.23.0'
+      
+      - name: build php-fpm exporter
+        run: |
+          cd phpexporter
+          go build
+          mkdir -p ../phpfpm/rootfs/usr/local/bin/
+          cp php-fpm_exporter ../phpfpm/rootfs/usr/local/bin/
+          cd ../
+
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -131,6 +167,24 @@ jobs:
       security-events: write
 
     steps:
+      - name: checkout php-fpm_exporter repo
+        uses: actions/checkout@v3
+        with:
+          repository: sysdiglabs/php-fpm_exporter
+          path: ./phpexporter
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '^1.23.0'
+      
+      - name: build php-fpm exporter
+        run: |
+          cd phpexporter
+          go build
+          mkdir -p ../phpfpm/rootfs/usr/local/bin/
+          cp php-fpm_exporter ../phpfpm/rootfs/usr/local/bin/
+          cd ../
+
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -186,6 +240,24 @@ jobs:
       security-events: write
 
     steps:
+      - name: checkout php-fpm_exporter repo
+        uses: actions/checkout@v3
+        with:
+          repository: sysdiglabs/php-fpm_exporter
+          path: ./phpexporter
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '^1.23.0'
+      
+      - name: build php-fpm exporter
+        run: |
+          cd phpexporter
+          go build
+          mkdir -p ../phpfpm/rootfs/usr/local/bin/
+          cp php-fpm_exporter ../phpfpm/rootfs/usr/local/bin/
+          cd ../
+
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -241,6 +313,24 @@ jobs:
       security-events: write
 
     steps:
+      - name: checkout php-fpm_exporter repo
+        uses: actions/checkout@v3
+        with:
+          repository: sysdiglabs/php-fpm_exporter
+          path: ./phpexporter
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '^1.23.0'
+      
+      - name: build php-fpm exporter
+        run: |
+          cd phpexporter
+          go build
+          mkdir -p ../phpfpm/rootfs/usr/local/bin/
+          cp php-fpm_exporter ../phpfpm/rootfs/usr/local/bin/
+          cd ../
+
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -295,6 +385,24 @@ jobs:
       security-events: write
 
     steps:
+      - name: checkout php-fpm_exporter repo
+        uses: actions/checkout@v3
+        with:
+          repository: sysdiglabs/php-fpm_exporter
+          path: ./phpexporter
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '^1.23.0'
+      
+      - name: build php-fpm exporter
+        run: |
+          cd phpexporter
+          go build
+          mkdir -p ../phpfpm/rootfs/usr/local/bin/
+          cp php-fpm_exporter ../phpfpm/rootfs/usr/local/bin/
+          cd ../
+
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -349,6 +457,24 @@ jobs:
       security-events: write
 
     steps:
+      - name: checkout php-fpm_exporter repo
+        uses: actions/checkout@v3
+        with:
+          repository: sysdiglabs/php-fpm_exporter
+          path: ./phpexporter
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '^1.23.0'
+      
+      - name: build php-fpm exporter
+        run: |
+          cd phpexporter
+          go build
+          mkdir -p ../phpfpm/rootfs/usr/local/bin/
+          cp php-fpm_exporter ../phpfpm/rootfs/usr/local/bin/
+          cd ../
+
       - name: Checkout repository
         uses: actions/checkout@v3
 
