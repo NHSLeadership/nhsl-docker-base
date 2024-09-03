@@ -10,9 +10,9 @@ ENV S6_OVERLAY_NOARCH=https://github.com/just-containers/s6-overlay/releases/dow
     S6_OVERLAY_AMD64=https://github.com/just-containers/s6-overlay/releases/download/v3.1.6.2/s6-overlay-x86_64.tar.xz \
     METRICS_URL=https://github.com/hipages/php-fpm_exporter/releases/download/v2.2.0/php-fpm_exporter_2.2.0_linux_amd64 \
     HEALTHCHECK_URL=https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck \
-    SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.29/supercronic-linux-amd64 \
+    SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.30/supercronic-linux-amd64 \
     SUPERCRONIC=supercronic-linux-amd64 \
-    SUPERCRONIC_SHA1SUM=cd48d45c4b10f3f0bfdd3a57d054cd05ac96812b \
+    SUPERCRONIC_SHA1SUM=9f27ad28c5c57cd133325b2a66bba69ba2235799 \
     S6_KEEP_ENV=1 \
     S6_FIX_ATTRS_HIDDEN=1 \
     S6_READ_ONLY_ROOT=1 \
@@ -51,7 +51,7 @@ RUN apt-get update \
   && apt-get update \
   && apt-get install --no-install-recommends -y ${PHP_PACKAGES} && rm -rf /var/lib/apt/lists/* \
   ## Add PHP-FPM Prometheus exporter
-  && curl -L "$METRICS_URL" --output /usr/local/bin/php-fpm_exporter \
+  ## && curl -L "$METRICS_URL" --output /usr/local/bin/php-fpm_exporter \
   && chmod +x /usr/local/bin/php-fpm_exporter \
   ## Add PHP-FPM Health check script
   && curl -L "$HEALTHCHECK_URL" --output /usr/local/bin/php-fpm-healthcheck \

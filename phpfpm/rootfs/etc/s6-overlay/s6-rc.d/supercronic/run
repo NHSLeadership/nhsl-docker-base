@@ -1,5 +1,5 @@
 #!/command/with-contenv bash
 
-if [ "$ROLE" == "CRON" ] || [ "$ROLE" == "WORKER" ]; then
+if [ "$ROLE" == "CRON" ] || [ "$ROLE" == "WORKER" ] || [ "$ROLE" == "MONOLITHIC" ]; then
    /usr/local/bin/supercronic -overlapping -split-logs /nhsla/cron 1>/dev/stdout
 fi
