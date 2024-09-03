@@ -14,6 +14,33 @@ env:
   ORG: nhsleadership
 
 jobs:
+  build-php-fpm-exporter:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: create cache to store artifact
+        uses: actions/cache@v4
+          with:
+            path: artifacts
+            key: exporter-key
+
+      - name: checkout php-fpm_exporter repo
+        uses: actions/checkout@v3
+        with:
+          repository: sysdiglabs/php-fpm_exporter
+      
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '^1.23.0'
+      
+      - name: build php-fpm exporter
+        run: |
+          mkdir -p artifacts
+          go build -o artifacts/php-fpm_exporter
+
+
   build-php72-image:
     runs-on: ubuntu-latest
     permissions:
@@ -22,25 +49,19 @@ jobs:
       security-events: write
 
     steps:
-      - name: checkout php-fpm_exporter repo
-        uses: actions/checkout@v3
-        with:
-          repository: sysdiglabs/php-fpm_exporter
-          path: ./phpexporter
-
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - uses: actions/setup-go@v5
+      - name: Restore exporter cache
+        uses: actions/cache/restore@v4
         with:
-          go-version: '^1.23.0'
+          path: artifacts
+          key: exporter-key
       
-      - name: build php-fpm exporter
-        run: |
-          cd phpexporter
-          mkdir -p ../phpfpm/rootfs/usr/local/bin/
-          go build -o ../phpfpm/rootfs/usr/local/bin/php-fpm_exporter
-          cd ../
+      - name: grab exporter artifact
+        run:
+          mkdir -p phpfpm/rootfs/usr/local/bin/
+          cp artifacts/php-fpm_exporter phpfpm/rootfs/usr/local/bin/
 
       - name: Get lists of PHP modules to install
         run: |
@@ -93,25 +114,19 @@ jobs:
       security-events: write
 
     steps:
-      - name: checkout php-fpm_exporter repo
-        uses: actions/checkout@v3
-        with:
-          repository: sysdiglabs/php-fpm_exporter
-          path: ./phpexporter
-
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - uses: actions/setup-go@v5
+      - name: Restore exporter cache
+        uses: actions/cache/restore@v4
         with:
-          go-version: '^1.23.0'
+          path: artifacts
+          key: exporter-key
       
-      - name: build php-fpm exporter
-        run: |
-          cd phpexporter
-          mkdir -p ../phpfpm/rootfs/usr/local/bin/
-          go build -o ../phpfpm/rootfs/usr/local/bin/php-fpm_exporter
-          cd ../
+      - name: grab exporter artifact
+        run:
+          mkdir -p phpfpm/rootfs/usr/local/bin/
+          cp artifacts/php-fpm_exporter phpfpm/rootfs/usr/local/bin/
 
       - name: Get lists of PHP modules to install
         run: |
@@ -165,25 +180,19 @@ jobs:
       security-events: write
 
     steps:
-      - name: checkout php-fpm_exporter repo
-        uses: actions/checkout@v3
-        with:
-          repository: sysdiglabs/php-fpm_exporter
-          path: ./phpexporter
-
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - uses: actions/setup-go@v5
+      - name: Restore exporter cache
+        uses: actions/cache/restore@v4
         with:
-          go-version: '^1.23.0'
+          path: artifacts
+          key: exporter-key
       
-      - name: build php-fpm exporter
-        run: |
-          cd phpexporter
-          mkdir -p ../phpfpm/rootfs/usr/local/bin/
-          go build -o ../phpfpm/rootfs/usr/local/bin/php-fpm_exporter
-          cd ../
+      - name: grab exporter artifact
+        run:
+          mkdir -p phpfpm/rootfs/usr/local/bin/
+          cp artifacts/php-fpm_exporter phpfpm/rootfs/usr/local/bin/
 
       - name: Get lists of PHP modules to install
         run: |
@@ -237,25 +246,19 @@ jobs:
       security-events: write
 
     steps:
-      - name: checkout php-fpm_exporter repo
-        uses: actions/checkout@v3
-        with:
-          repository: sysdiglabs/php-fpm_exporter
-          path: ./phpexporter
-
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - uses: actions/setup-go@v5
+      - name: Restore exporter cache
+        uses: actions/cache/restore@v4
         with:
-          go-version: '^1.23.0'
+          path: artifacts
+          key: exporter-key
       
-      - name: build php-fpm exporter
-        run: |
-          cd phpexporter
-          mkdir -p ../phpfpm/rootfs/usr/local/bin/
-          go build -o ../phpfpm/rootfs/usr/local/bin/php-fpm_exporter
-          cd ../
+      - name: grab exporter artifact
+        run:
+          mkdir -p phpfpm/rootfs/usr/local/bin/
+          cp artifacts/php-fpm_exporter phpfpm/rootfs/usr/local/bin/
 
       - name: Get lists of PHP modules to install
         run: |
@@ -309,25 +312,19 @@ jobs:
       security-events: write
 
     steps:
-      - name: checkout php-fpm_exporter repo
-        uses: actions/checkout@v3
-        with:
-          repository: sysdiglabs/php-fpm_exporter
-          path: ./phpexporter
-
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - uses: actions/setup-go@v5
+      - name: Restore exporter cache
+        uses: actions/cache/restore@v4
         with:
-          go-version: '^1.23.0'
+          path: artifacts
+          key: exporter-key
       
-      - name: build php-fpm exporter
-        run: |
-          cd phpexporter
-          mkdir -p ../phpfpm/rootfs/usr/local/bin/
-          go build -o ../phpfpm/rootfs/usr/local/bin/php-fpm_exporter
-          cd ../
+      - name: grab exporter artifact
+        run:
+          mkdir -p phpfpm/rootfs/usr/local/bin/
+          cp artifacts/php-fpm_exporter phpfpm/rootfs/usr/local/bin/
 
       - name: Get lists of PHP modules to install
         run: |
@@ -380,25 +377,19 @@ jobs:
       security-events: write
 
     steps:
-      - name: checkout php-fpm_exporter repo
-        uses: actions/checkout@v3
-        with:
-          repository: sysdiglabs/php-fpm_exporter
-          path: ./phpexporter
-
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - uses: actions/setup-go@v5
+      - name: Restore exporter cache
+        uses: actions/cache/restore@v4
         with:
-          go-version: '^1.23.0'
+          path: artifacts
+          key: exporter-key
       
-      - name: build php-fpm exporter
-        run: |
-          cd phpexporter
-          mkdir -p ../phpfpm/rootfs/usr/local/bin/
-          go build -o ../phpfpm/rootfs/usr/local/bin/php-fpm_exporter
-          cd ../
+      - name: grab exporter artifact
+        run:
+          mkdir -p phpfpm/rootfs/usr/local/bin/
+          cp artifacts/php-fpm_exporter phpfpm/rootfs/usr/local/bin/
 
       - name: Get lists of PHP modules to install
         run: |
@@ -451,25 +442,19 @@ jobs:
       security-events: write
 
     steps:
-      - name: checkout php-fpm_exporter repo
-        uses: actions/checkout@v3
-        with:
-          repository: sysdiglabs/php-fpm_exporter
-          path: ./phpexporter
-
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - uses: actions/setup-go@v5
+      - name: Restore exporter cache
+        uses: actions/cache/restore@v4
         with:
-          go-version: '^1.23.0'
+          path: artifacts
+          key: exporter-key
       
-      - name: build php-fpm exporter
-        run: |
-          cd phpexporter
-          mkdir -p ../phpfpm/rootfs/usr/local/bin/
-          go build -o ../phpfpm/rootfs/usr/local/bin/php-fpm_exporter
-          cd ../
+      - name: grab exporter artifact
+        run:
+          mkdir -p phpfpm/rootfs/usr/local/bin/
+          cp artifacts/php-fpm_exporter phpfpm/rootfs/usr/local/bin/
 
       - name: Get lists of PHP modules to install
         run: |
