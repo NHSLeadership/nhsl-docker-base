@@ -61,7 +61,8 @@ RUN apt-get update \
     && mv composer.phar /usr/local/bin/composer \
     && chmod a+x /usr/local/bin/composer \
   ## Add Atatus GPG key and repo
-  && curl -L https://s3.amazonaws.com/atatus-artifacts/gpg/atatus.gpg | apt-key add - \
+  && curl https://s3.amazonaws.com/atatus-artifacts/gpg/atatus.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/atatus.gpg \
+  && curl https://s3.amazonaws.com/atatus-artifacts/gpg/atatus-sha512.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/atatus-sha512.gpg \
     && echo "deb https://s3.amazonaws.com/atatus-artifacts/atatus-php/debian stable main" \
       | tee -a /etc/apt/sources.list.d/atatus-php-agent.list \
     && apt-get update \
