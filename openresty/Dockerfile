@@ -1,8 +1,8 @@
 FROM ubuntu:jammy
 LABEL maintainer="devops@nhsx.uk"
 
-ENV S6_OVERLAY_NOARCH=https://github.com/just-containers/s6-overlay/releases/download/v3.1.6.2/s6-overlay-noarch.tar.xz \
-    S6_OVERLAY_AMD64=https://github.com/just-containers/s6-overlay/releases/download/v3.1.6.2/s6-overlay-x86_64.tar.xz \
+ENV S6_OVERLAY_NOARCH=https://github.com/just-containers/s6-overlay/releases/download/v3.2.1.0/s6-overlay-noarch.tar.xz \
+    S6_OVERLAY_AMD64=https://github.com/just-containers/s6-overlay/releases/download/v3.2.1.0/s6-overlay-x86_64.tar.xz \
     S6_KEEP_ENV=1 \
     S6_FIX_ATTRS_HIDDEN=1 \
     S6_READ_ONLY_ROOT=1 \
