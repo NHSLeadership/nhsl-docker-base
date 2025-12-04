@@ -51,8 +51,8 @@ RUN apt-get update \
   && apt-get update \
   && apt-get install --no-install-recommends -y ${PHP_PACKAGES} && rm -rf /var/lib/apt/lists/* \
   ## Add PHP-FPM Prometheus exporter
-  ## && curl -L "$METRICS_URL" --output /usr/local/bin/php-fpm_exporter \
-  && chmod +x /usr/local/bin/php-fpm_exporter \
+  #&& curl -L "$METRICS_URL" --output /usr/local/bin/php-fpm_exporter \
+  #&& chmod +x /usr/local/bin/php-fpm_exporter \
   ## Add PHP-FPM Health check script
   && curl -L "$HEALTHCHECK_URL" --output /usr/local/bin/php-fpm-healthcheck \
   && chmod +x /usr/local/bin/php-fpm-healthcheck \
