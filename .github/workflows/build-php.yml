@@ -27,7 +27,7 @@ jobs:
           key: exporter-key
 
       - name: Checkout php-fpm_exporter repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: sysdiglabs/php-fpm_exporter
 
@@ -64,7 +64,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Restore exporter cache
         uses: actions/cache/restore@v4
