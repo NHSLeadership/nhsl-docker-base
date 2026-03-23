@@ -23,40 +23,65 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}
+
+      # Build image locally first
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./openresty
+          push: false
+          load: true
+          tags: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:master
+          labels: ${{ steps.meta.outputs.labels }}
+
+      # Generate SBOM
+      - name: Generate SBOM with Syft
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:master
+          format: spdx-json
+          output-file: sbom-openresty.spdx.json
+
+      - name: Upload SBOM as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-openresty
+          path: sbom-openresty.spdx.json
+
+      # Scan for vulnerabilities
+      - name: Scan image with Grype
+        id: grype
+        uses: anchore/scan-action@v6
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:master
+          output-format: sarif
+          severity-cutoff: high
+          only-fixed: true
+          fail-build: false
+
+      - name: Upload scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.grype.outputs.sarif }}
+          category: openresty
+
+      # Push only after scan completes
       - name: Login to GHCR
-        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
-        with:
-          context: ./openresty
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:master, ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:latest
-          labels: ${{ steps.meta.outputs.labels }}
-      
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:master
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-          ignore-unfixed: true
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: 'trivy-results.sarif'
-          category: openresty
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:master
+          docker tag ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:master ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:latest
+          docker push ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:latest
