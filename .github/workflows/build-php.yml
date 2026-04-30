@@ -90,7 +90,7 @@ jobs:
 
       # Build image locally first
       - name: Build PHP ${{ matrix.php_version }} image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./phpfpm
           push: false
