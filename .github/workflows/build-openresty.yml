@@ -58,7 +58,7 @@ jobs:
       # Scan for vulnerabilities
       - name: Scan image with Grype
         id: grype
-        uses: anchore/scan-action@v6
+        uses: anchore/scan-action@v7
         with:
           image: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:master
           output-format: sarif
