@@ -40,7 +40,7 @@ build-all:
 	build-openresty build-php72 build-php73 build-php74 build-php80 build-php81 build-php82 build-php83 build-php84 build-php85
 
 build-openresty:
-	docker build -t ${REPO}nhsl-ubuntu-openresty:${TAG} -f ./openresty/Dockerfile ./openresty/
+	docker build --platform linux/amd64,linux/arm64 -t ${REPO}nhsl-ubuntu-openresty:${TAG} -f ./openresty/Dockerfile ./openresty/
 
 build-php72:
 	@echo "$$(tr -d '\r' < ./phpfpm/php72.txt)" > ./phpfpm/php72.txt
