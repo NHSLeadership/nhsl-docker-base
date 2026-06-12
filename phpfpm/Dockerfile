@@ -1,4 +1,4 @@
-FROM ubuntu:jammy
+FROM ubuntu:noble
 LABEL maintainer="devops@nhsx.uk"
 
 ARG PHP_VERSION
@@ -6,103 +6,137 @@ ARG PHP_PACKAGES
 ARG DEBIAN_FRONTEND=noninteractive
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-ENV S6_OVERLAY_NOARCH=https://github.com/just-containers/s6-overlay/releases/download/v3.2.2.0/s6-overlay-noarch.tar.xz \
-    S6_OVERLAY_AMD64=https://github.com/just-containers/s6-overlay/releases/download/v3.2.2.0/s6-overlay-x86_64.tar.xz \
-    METRICS_URL=https://github.com/hipages/php-fpm_exporter/releases/download/v2.2.0/php-fpm_exporter_2.2.0_linux_amd64 \
+
+ENV S6_OVERLAY_VERSION=3.2.3.0 \
+    SUPERCRONIC_VERSION=0.2.46 \
+    SUPERCRONIC_SHA1_AMD64=5bcefed628e32adc08e32634db2d10e9230dbca0 \
+    SUPERCRONIC_SHA1_ARM64=639ab81a72771990790df7ee87d9acfe88e5fa83 \
+    ATATUS_VERSION=1.17.1 \
     HEALTHCHECK_URL=https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck \
-    SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.44/supercronic-linux-amd64 \
-    SUPERCRONIC=supercronic-linux-amd64 \
-    SUPERCRONIC_SHA1SUM=6eb0a8e1e6673675dc67668c1a9b6409f79c37bc \
     S6_KEEP_ENV=1 \
     S6_FIX_ATTRS_HIDDEN=1 \
     S6_READ_ONLY_ROOT=1 \
-    S6_KEEP_ENV=1 \
     S6_LOGGING=0 \
     S6_CMD_WAIT_FOR_SERVICES_MAXTIME=0 \
     PHP_VERSION=$PHP_VERSION
 
 COPY --chown=1000:1000 /rootfs/ /
 
-RUN apt-get update \
-  && apt-get install \
-    busybox-static \
-    ca-certificates \
-    curl \
-    git \
-    gnupg \
-    gpg-agent \
-    less \
-    libfcgi-bin \
-    nano \
-    openssh-client \
-    ssmtp \
-    unzip \
-    zip \
-    xz-utils \
-    -y && rm -rf /var/lib/apt/lists/* \
-  && curl -L "$S6_OVERLAY_NOARCH" --output /tmp/s6-overlay-noarch.tar.xz \
-  && curl -L "$S6_OVERLAY_AMD64" --output /tmp/s6-overlay-amd64.tar.xz \
-  && tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz \
-  && tar -C / -Jxpf /tmp/s6-overlay-amd64.tar.xz \
-  && rm -rf /tmp/* \
-  && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 4F4EA0AAE5267A6C \
-  && echo "deb http://ppa.launchpad.net/ondrej/php/ubuntu jammy main" \
-    | tee /etc/apt/sources.list.d/ondrej.list \
-  && apt-get update \
-  && apt-get install --no-install-recommends -y ${PHP_PACKAGES} && rm -rf /var/lib/apt/lists/* \
-  ## Add PHP-FPM Prometheus exporter
-  #&& curl -L "$METRICS_URL" --output /usr/local/bin/php-fpm_exporter \
-  #&& chmod +x /usr/local/bin/php-fpm_exporter \
-  ## Add PHP-FPM Health check script
-  && curl -L "$HEALTHCHECK_URL" --output /usr/local/bin/php-fpm-healthcheck \
-  && chmod +x /usr/local/bin/php-fpm-healthcheck \
-  ## Add global Composer
-  && curl --proto "=https" --tlsv1.2 -sS https://getcomposer.org/installer | php \
-    && mv composer.phar /usr/local/bin/composer \
-    && chmod a+x /usr/local/bin/composer \
-  ## Add Atatus GPG key and repo
-  && curl https://s3.amazonaws.com/atatus-artifacts/gpg/atatus.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/atatus.gpg \
-  && curl https://s3.amazonaws.com/atatus-artifacts/gpg/atatus-sha512.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/atatus-sha512.gpg \
-    && echo "deb https://s3.amazonaws.com/atatus-artifacts/atatus-php/debian stable main" \
-      | tee -a /etc/apt/sources.list.d/atatus-php-agent.list \
-    && apt-get update \
-    && apt-get install --no-install-recommends atatus-php-agent -y && rm -rf /var/lib/apt/lists/* \
-  && apt-get remove -y --purge gnupg \
-  && useradd --create-home --shell /bin/bash --uid 1000 nhsla \
-  && mkdir -p /app/public \
-  && chown -R nhsla:nhsla /app \
-  && mkdir -p /nhsla \
-  && chown -R nhsla:nhsla /nhsla \
-  && sed -i -e 's|variables_order = "GPCS"|variables_order = "EGPCS"|g' /etc/php/${PHP_VERSION}/fpm/php.ini \
-  && sed -i -e 's|;clear_env = no|clear_env = no|g' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
-  && sed -i "s|;date.timezone =.*|date.timezone = UTC|" /etc/php/${PHP_VERSION}/fpm/php.ini \
-  && sed -i "s|upload_max_filesize = .*|upload_max_filesize = 1G|" /etc/php/${PHP_VERSION}/fpm/php.ini \
-  && sed -i "s|post_max_size = .*|post_max_size = 512M|" /etc/php/${PHP_VERSION}/fpm/php.ini \
-  && sed -i "s|;cgi.fix_pathinfo=1|cgi.fix_pathinfo=0|" /etc/php/${PHP_VERSION}/fpm/php.ini \
-  && sed -i -e "s|error_log =.*|error_log = \/dev\/stderr|" /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \
-  && sed -i -e "s|;daemonize\s*=\s*yes|daemonize = no|g" /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \
-  && sed -i "s|;catch_workers_output = .*|catch_workers_output = yes|" /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
-  && sed -i -e "s|pid =.*|pid = \/nhsla\/etc\/php-fpm.pid|" /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \
-   && sed -i -e 's|;log_level = notice|log_level = warning|g' /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \
-  && rm -rf /etc/php/${PHP_VERSION}/fpm/php.ini \
-  && rm -rf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
-  && rm -rf /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini \
-  && rm -rf /etc/php/${PHP_VERSION}/cli/conf.d/20-atatus.ini \
-  && ln -s /nhsla/etc/php.ini /etc/php/${PHP_VERSION}/fpm/php.ini \
-  && ln -s /nhsla/etc/www.conf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
-  && ln -s /nhsla/etc/atatus.ini /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini \
-  && ln -s /etc/php/${PHP_VERSION}/fpm /etc/php/fpm \
-  && ln -s /etc/php/${PHP_VERSION}/cli /etc/php/cli \
-  && rm -rf /etc/ssmtp/ssmtp.conf \
-  && ln -s /nhsla/etc/ssmtp.conf /etc/ssmtp/ssmtp.conf \
-  && curl -fsSLO "$SUPERCRONIC_URL" \
-  && echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - \
-  && chmod +x "$SUPERCRONIC" \
-  && mv "$SUPERCRONIC" "/usr/local/bin/${SUPERCRONIC}" \
-  && ln -s "/usr/local/bin/${SUPERCRONIC}" /usr/local/bin/supercronic \
-  && chmod +x /etc/cont-init.d/01-boot.sh \
-  && chmod +x /etc/cont-init.d/02-setup.sh \
-  && date > /image_base_build_date
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        busybox-static \
+        ca-certificates \
+        curl \
+        git \
+        less \
+        libfcgi-bin \
+        nano \
+        openssh-client \
+        ssmtp \
+        unzip \
+        zip \
+        xz-utils; \
+    \
+    # Resolve target architecture
+    DPKG_ARCH="$(dpkg --print-architecture)"; \
+    case "$DPKG_ARCH" in \
+        amd64) S6_ARCH="x86_64";  SUPERCRONIC_ARCH="amd64"; SUPERCRONIC_SHA1="${SUPERCRONIC_SHA1_AMD64}"; ATATUS_TAR_ARCH="x64"   ;; \
+        arm64) S6_ARCH="aarch64"; SUPERCRONIC_ARCH="arm64"; SUPERCRONIC_SHA1="${SUPERCRONIC_SHA1_ARM64}"; ATATUS_TAR_ARCH="arm64" ;; \
+        *) echo "Unsupported architecture: $DPKG_ARCH" >&2; exit 1 ;; \
+    esac; \
+    \
+    # Install s6-overlay
+    S6_BASE="https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}"; \
+    curl --proto "=https" --tlsv1.3 -fsSL "${S6_BASE}/s6-overlay-noarch.tar.xz"     -o /tmp/s6-noarch.tar.xz; \
+    curl --proto "=https" --tlsv1.3 -fsSL "${S6_BASE}/s6-overlay-${S6_ARCH}.tar.xz" -o /tmp/s6-arch.tar.xz; \
+    tar -C / -Jxpf /tmp/s6-noarch.tar.xz; \
+    tar -C / -Jxpf /tmp/s6-arch.tar.xz; \
+    rm /tmp/s6-*.tar.xz; \
+    \
+    # Set up Ondrej PHP PPA (signed-by, no apt-key)
+    mkdir -p /etc/apt/keyrings; \
+    curl --proto "=https" --tlsv1.3 -fsSL \
+        "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x4F4EA0AAE5267A6C" \
+        -o /etc/apt/keyrings/ondrej-php.asc; \
+    . /etc/os-release; \
+    echo "deb [signed-by=/etc/apt/keyrings/ondrej-php.asc] https://ppa.launchpadcontent.net/ondrej/php/ubuntu ${VERSION_CODENAME} main" \
+        > /etc/apt/sources.list.d/ondrej-php.list; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends ${PHP_PACKAGES}; \
+    \
+    # PHP-FPM health check
+    curl --proto "=https" --tlsv1.3 -fsSL "$HEALTHCHECK_URL" -o /usr/local/bin/php-fpm-healthcheck; \
+    chmod +x /usr/local/bin/php-fpm-healthcheck; \
+    \
+    # Composer
+    curl --proto "=https" --tlsv1.3 -fsSL https://getcomposer.org/installer \
+        | php -- --install-dir=/usr/local/bin --filename=composer; \
+    chmod +x /usr/local/bin/composer; \
+    \
+    # Atatus PHP agent (tarball install — supports both amd64 and arm64)
+    ATATUS_DIR="atatus-php-${ATATUS_VERSION}-${ATATUS_TAR_ARCH}-debian"; \
+    curl --proto "=https" --tlsv1.3 -fsSL \
+        "https://s3.amazonaws.com/atatus-artifacts/atatus-php/downloads/${ATATUS_DIR}.tar.gz" \
+        -o /tmp/atatus.tar.gz; \
+    tar -xzf /tmp/atatus.tar.gz -C /tmp; \
+    ATATUS_LICENSE_KEY="placeholder" ATATUS_APP_NAME="placeholder" \
+        bash /tmp/${ATATUS_DIR}/install.sh; \
+    rm -rf /tmp/atatus.tar.gz /tmp/${ATATUS_DIR}; \
+    \
+    # Supercronic
+    SUPERCRONIC="supercronic-linux-${SUPERCRONIC_ARCH}"; \
+    curl --proto "=https" --tlsv1.3 -fsSLO \
+        "https://github.com/aptible/supercronic/releases/download/v${SUPERCRONIC_VERSION}/${SUPERCRONIC}"; \
+    echo "${SUPERCRONIC_SHA1}  ${SUPERCRONIC}" | sha1sum -c -; \
+    chmod +x "$SUPERCRONIC"; \
+    mv "$SUPERCRONIC" "/usr/local/bin/${SUPERCRONIC}"; \
+    ln -s "/usr/local/bin/${SUPERCRONIC}" /usr/local/bin/supercronic; \
+    \
+    # User and directory setup
+    userdel -r ubuntu 2>/dev/null || true; \
+    useradd --create-home --shell /bin/bash --uid 1000 nhsla; \
+    mkdir -p /app/public /nhsla; \
+    chown -R nhsla:nhsla /app /nhsla; \
+    \
+    # PHP config tweaks
+    sed -i \
+        -e 's|variables_order = "GPCS"|variables_order = "EGPCS"|g' \
+        -e 's|;date.timezone =.*|date.timezone = UTC|' \
+        -e 's|upload_max_filesize = .*|upload_max_filesize = 1G|' \
+        -e 's|post_max_size = .*|post_max_size = 512M|' \
+        -e 's|;cgi.fix_pathinfo=1|cgi.fix_pathinfo=0|' \
+        /etc/php/${PHP_VERSION}/fpm/php.ini; \
+    sed -i \
+        -e 's|;clear_env = no|clear_env = no|g' \
+        -e 's|;catch_workers_output = .*|catch_workers_output = yes|' \
+        /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf; \
+    sed -i \
+        -e 's|error_log =.*|error_log = /dev/stderr|' \
+        -e 's|;daemonize\s*=\s*yes|daemonize = no|g' \
+        -e 's|pid =.*|pid = /nhsla/etc/php-fpm.pid|' \
+        -e 's|;log_level = notice|log_level = warning|g' \
+        /etc/php/${PHP_VERSION}/fpm/php-fpm.conf; \
+    \
+    # Symlink config files to /nhsla/etc/
+    rm -f /etc/php/${PHP_VERSION}/fpm/php.ini \
+          /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
+          /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini \
+          /etc/php/${PHP_VERSION}/cli/conf.d/20-atatus.ini; \
+    ln -s /nhsla/etc/php.ini /etc/php/${PHP_VERSION}/fpm/php.ini; \
+    ln -s /nhsla/etc/www.conf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf; \
+    ln -s /nhsla/etc/atatus.ini /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini; \
+    ln -s /etc/php/${PHP_VERSION}/fpm /etc/php/fpm; \
+    ln -s /etc/php/${PHP_VERSION}/cli /etc/php/cli; \
+    rm -f /etc/ssmtp/ssmtp.conf; \
+    ln -s /nhsla/etc/ssmtp.conf /etc/ssmtp/ssmtp.conf; \
+    \
+    chmod +x /etc/cont-init.d/01-boot.sh /etc/cont-init.d/02-setup.sh; \
+    date > /image_base_build_date; \
+    \
+    # Cleanup
+    apt-get clean; \
+    rm -rf /var/lib/apt/lists/* /tmp/*
 
 USER 1000:1000
 

@@ -20,11 +20,11 @@ jobs:
       contents: read
 
     steps:
-      - name: Create cache to store artifact
+      - name: Create cache to store artifacts
         uses: actions/cache@v5
         with:
           path: artifacts
-          key: exporter-key
+          key: exporter-multiarch-v1
 
       - name: Checkout php-fpm_exporter repo
         uses: actions/checkout@v6
@@ -35,13 +35,14 @@ jobs:
         with:
           go-version: '^1.23.0'
 
-      - name: Build php-fpm exporter
+      - name: Build php-fpm exporter (amd64 + arm64)
         run: |
           mkdir -p artifacts
-          go build -o artifacts/php-fpm_exporter
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o artifacts/php-fpm_exporter-amd64
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o artifacts/php-fpm_exporter-arm64
 
-  build-php-image:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ${{ matrix.runner }}
     needs: build-php-fpm-exporter
     permissions:
       contents: read
@@ -51,16 +52,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php_version:
-          - '7.2'
-          - '7.3'
-          - '7.4'
-          - '8.0'
-          - '8.1'
-          - '8.2'
-          - '8.3'
-          - '8.4'
-#          - '8.5'
+        php_version: ['8.0', '8.1', '8.2', '8.3', '8.4']
+        platform: [linux/amd64, linux/arm64]
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+            arch: amd64
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            arch: arm64
 
     steps:
       - name: Checkout repository
@@ -70,57 +70,67 @@ jobs:
         uses: actions/cache/restore@v5
         with:
           path: artifacts
-          key: exporter-key
+          key: exporter-multiarch-v1
 
-      - name: Copy exporter artifact
+      - name: Copy exporter artifact for ${{ matrix.arch }}
         run: |
           mkdir -p phpfpm/rootfs/usr/local/bin/
-          cp artifacts/php-fpm_exporter phpfpm/rootfs/usr/local/bin/
+          cp artifacts/php-fpm_exporter-${{ matrix.arch }} phpfpm/rootfs/usr/local/bin/php-fpm_exporter
+          chmod +x phpfpm/rootfs/usr/local/bin/php-fpm_exporter
 
       - name: Get PHP modules list
         run: |
           PHP_SHORT=$(echo "${{ matrix.php_version }}" | tr -d '.')
           echo "PHP_MODS=$(awk '$1=$1' ORS=' ' ./phpfpm/php${PHP_SHORT}.txt)" >> $GITHUB_ENV
 
-      - name: Extract metadata (tags, labels) for Docker
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (labels) for Docker
         id: meta
         uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}
 
-      # Build image locally first
-      - name: Build PHP ${{ matrix.php_version }} image
+      - name: Build PHP ${{ matrix.php_version }} for scanning (${{ matrix.arch }})
         uses: docker/build-push-action@v7
         with:
           context: ./phpfpm
-          push: false
+          platforms: ${{ matrix.platform }}
           load: true
-          tags: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:${{ matrix.php_version }}-master
+          tags: scan-target:${{ matrix.php_version }}-${{ matrix.arch }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             PHP_VERSION=${{ matrix.php_version }}
             PHP_PACKAGES=${{ env.PHP_MODS }}
+          cache-from: type=gha,scope=${{ matrix.php_version }}-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.php_version }}-${{ matrix.arch }}
 
-      # Generate SBOM
       - name: Generate SBOM with Syft
         uses: anchore/sbom-action@v0
         with:
-          image: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:${{ matrix.php_version }}-master
+          image: scan-target:${{ matrix.php_version }}-${{ matrix.arch }}
           format: spdx-json
-          output-file: sbom-php${{ matrix.php_version }}.spdx.json
+          output-file: sbom-php${{ matrix.php_version }}-${{ matrix.arch }}.spdx.json
 
       - name: Upload SBOM as artifact
         uses: actions/upload-artifact@v7
         with:
-          name: sbom-php${{ matrix.php_version }}
-          path: sbom-php${{ matrix.php_version }}.spdx.json
+          name: sbom-php${{ matrix.php_version }}-${{ matrix.arch }}
+          path: sbom-php${{ matrix.php_version }}-${{ matrix.arch }}.spdx.json
 
-      # Scan for vulnerabilities
-      - name: Scan PHP ${{ matrix.php_version }} image with Grype
+      - name: Scan PHP ${{ matrix.php_version }} image with Grype (${{ matrix.arch }})
         id: grype
         uses: anchore/scan-action@v7
         with:
-          image: ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:${{ matrix.php_version }}-master
+          image: scan-target:${{ matrix.php_version }}-${{ matrix.arch }}
           output-format: sarif
           severity-cutoff: high
           only-fixed: true
@@ -130,9 +140,58 @@ jobs:
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ${{ steps.grype.outputs.sarif }}
-          category: phpfpm-${{ matrix.php_version }}
+          category: phpfpm-${{ matrix.php_version }}-${{ matrix.arch }}
 
-      # Push only after scan completes — only step that needs GITHUB_TOKEN
+      - name: Build and push by digest
+        id: push
+        uses: docker/build-push-action@v7
+        with:
+          context: ./phpfpm
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            PHP_VERSION=${{ matrix.php_version }}
+            PHP_PACKAGES=${{ env.PHP_MODS }}
+          outputs: type=image,name=${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ matrix.php_version }}-${{ matrix.arch }}
+
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.push.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v7
+        with:
+          name: digests-${{ matrix.php_version }}-${{ matrix.arch }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php_version: ['8.0', '8.1', '8.2', '8.3', '8.4']
+
+    steps:
+      - name: Download digests for PHP ${{ matrix.php_version }}
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digests-${{ matrix.php_version }}-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Login to GHCR
         uses: docker/login-action@v4
         with:
@@ -140,5 +199,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push PHP ${{ matrix.php_version }} image
-        run: docker push ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:${{ matrix.php_version }}-master
+      - name: Create manifest list and push
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:${{ matrix.php_version }}-master \
+            $(printf '${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}@sha256:%s ' *)
+
+      - name: Inspect image
+        run: |
+          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}:${{ matrix.php_version }}-master
