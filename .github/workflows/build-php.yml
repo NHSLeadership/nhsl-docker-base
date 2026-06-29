@@ -27,7 +27,7 @@ jobs:
           key: exporter-multiarch-v1
 
       - name: Checkout php-fpm_exporter repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: sysdiglabs/php-fpm_exporter
 
@@ -64,7 +64,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Restore exporter cache
         uses: actions/cache/restore@v5
