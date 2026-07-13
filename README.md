@@ -1,8 +1,6 @@
 # Base Docker Images
 
-> ‼️ **Note:** Atatus is currently incompatible with PHP 8.5. Until a compatible agent is released the PHP 8.5 build will remain disabled. ‼️
-
-> Clean and functional base images providing PHP versions 7.2 to 8.3 and OpenResty web server.
+> Clean and functional base images providing PHP versions 7.2 to 8.5 and OpenResty web server.
 >
 > By NHS Leadership Academy
 
@@ -26,6 +24,8 @@ Images are currently built and pushed to GitHub's container registry. Available 
 - `ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:8.1-master`
 - `ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:8.2-master`
 - `ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:8.3-master`
+- `ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:8.4-master`
+- `ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:8.5-master`
 
 ## Assumptions
 
@@ -59,9 +59,37 @@ Openresty default site: `/user/local/openresty/nginx/conf/site.conf`
 
 **PHP-FPM**:
 php.ini: `/nhsla/etc/php.ini`
-php-fpm: `/nhsla/etc/php-fpm.conf`
 www pool: `/nhsla/etc/www.conf`
 additional configuration files may be added into `/etc/php/fpm/conf.d/*.ini`
+
+## Scaling PHP-FPM
+
+These images are designed to scale **horizontally**: the OpenResty and PHP-FPM containers run together in a Pod, and you add capacity by increasing the replica count (typically via an HPA), not by growing the number of workers inside a Pod.
+
+Because of this, the PHP-FPM pool defaults (in `www.conf`) use a **static** process manager:
+
+```
+pm = static
+pm.max_children = 10          # fixed number of always-on workers
+pm.max_requests = 1000        # recycle each worker to bound memory leaks
+request_terminate_timeout = 60s
+```
+
+`pm = static` gives each Pod a predictable, fixed memory and CPU footprint, which is exactly what Kubernetes resource requests/limits and the HPA need to reason about. Elasticity comes from replicas, so a fixed per-Pod concurrency is the point.
+
+### Sizing `pm.max_children`
+
+`max_children` is a **memory bet** and must be kept in sync with the PHP container's memory limit:
+
+- Worst case memory ≈ `pm.max_children × memory_limit` (default `128M`) plus the OPcache shared segment and base overhead. With the defaults that is roughly `10 × 128M ≈ 1.3 GB` of request memory at peak.
+- Idle workers are far smaller (tens of MB), but heavy requests (e.g. Moodle, image processing) can approach the `memory_limit` ceiling.
+- Rule of thumb: `pm.max_children ≈ (memory limit − OPcache − base) / realistic peak worker RSS`.
+
+**If you change the PHP container's resource limits (e.g. in an upstream Helm chart), tune `pm.max_children` to match**, by overriding `www.conf`. Giving a Pod less memory without lowering `max_children` risks OOM kills under load; giving it more memory without raising `max_children` leaves that headroom unused. Different applications (Laravel, WordPress, Moodle) have very different footprints, so treat the default of `10` as a conservative starting point, not a universal value.
+
+### Scaling signal for the HPA
+
+A static, I/O-bound pool can have **all workers busy waiting on a database or upstream API while CPU looks idle** — so a CPU-based HPA may fail to scale out even though requests are queuing behind a full pool. These images already run [`php-fpm_exporter`](https://github.com/sysdiglabs/php-fpm_exporter) (metrics on port `9253`), scraping the pool's `/status` page. Prefer scaling on pool saturation — **active processes / listen queue length** — or on request latency, rather than raw CPU.
 
 ## Environment Variables
 
@@ -117,7 +145,7 @@ The following ports are listening by default. Because of the unprivileged nature
 | memcached            | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    |
 | mysql                | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    |
 | mysqli               | ✔️    | ✔️    | ✔️    | ❌    | ❌    | ❌    | ❌    | ❌    | ❌    |
-| opcache              | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ❌    | 
+| opcache              | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️*   | 
 | pdo                  | ✔️    | ✔️    | ✔️    | ❌    | ❌    | ❌    | ❌    | ❌    | ❌    |
 | pgsql                | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    |
 | phar                 | ✔️    | ✔️    | ✔️    | ❌    | ❌    | ❌    | ❌    | ❌    | ❌    |
@@ -134,13 +162,15 @@ The following ports are listening by default. Because of the unprivileged nature
 
 
 
+> *opcache is compiled into the PHP 8.5 core, so it is present and enabled by default without a separate `php8.5-opcache` package (which no longer exists upstream).
+
 ## Running commands on startup
 
-Each container starts up using Docker's Entryfile directive. This calls the script at /entryfile.sh which will run various scripts in succession.
+Each container uses [s6-overlay](https://github.com/just-containers/s6-overlay) as its init system; the image `ENTRYPOINT` is `/init`. On boot it runs the scripts in `/etc/cont-init.d` in order, then starts the long-running services (php-fpm/openresty, the metrics exporter, and supercronic as appropriate).
 
 If the `AWS_HOST_ENVIRONMENT` environment variable exists we assume the two images are running inside a Kubernetes Pod together and application code is copied from `/app` into a shared emptyDir volume at `/app-shared`.
 
-Scripts should be placed into `/etc/cont-int.d`in the format `03-script.sh`. 01 and 02 are used for initial setup. You may use the ROLE environment variable to limit scripts to run on different containers.
+Scripts should be placed into `/etc/cont-init.d` in the format `03-script.sh`. 01 and 02 are used for initial setup. You may use the ROLE environment variable to limit scripts to run on different containers.
 
 ## A note on ReadOnlyRootFileSystem
 

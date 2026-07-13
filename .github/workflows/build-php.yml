@@ -24,12 +24,13 @@ jobs:
         uses: actions/cache@v6
         with:
           path: artifacts
-          key: exporter-multiarch-v1
+          key: exporter-multiarch-v2.3.6
 
       - name: Checkout php-fpm_exporter repo
         uses: actions/checkout@v7
         with:
           repository: sysdiglabs/php-fpm_exporter
+          ref: v2.3.6
 
       - uses: actions/setup-go@v6
         with:
@@ -52,7 +53,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php_version: ['8.0', '8.1', '8.2', '8.3', '8.4']
+        php_version: ['8.0', '8.1', '8.2', '8.3', '8.4', '8.5']
         platform: [linux/amd64, linux/arm64]
         include:
           - platform: linux/amd64
@@ -70,7 +71,7 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: artifacts
-          key: exporter-multiarch-v1
+          key: exporter-multiarch-v2.3.6
 
       - name: Copy exporter artifact for ${{ matrix.arch }}
         run: |
@@ -179,7 +180,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php_version: ['8.0', '8.1', '8.2', '8.3', '8.4']
+        php_version: ['8.0', '8.1', '8.2', '8.3', '8.4', '8.5']
 
     steps:
       - name: Download digests for PHP ${{ matrix.php_version }}

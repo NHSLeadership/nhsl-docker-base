@@ -18,7 +18,6 @@ fi
 echo "mailhub=$MAIL_HOST:$MAIL_PORT" >> /nhsla/etc/ssmtp.conf
 echo "root=$MAIL_ROOT" >> /nhsla/etc/ssmtp.conf
 echo "FromLineOverride=YES" >> /nhsla/etc/ssmtp.conf
-sed -i -e "s|;sendmail_path =|sendmail_path = /usr/sbin/ssmtp -t|g" /nhsla/etc/php.ini
 #####
 
 #####

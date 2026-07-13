@@ -11,7 +11,7 @@ ENV S6_OVERLAY_VERSION=3.2.3.0 \
     SUPERCRONIC_VERSION=0.2.46 \
     SUPERCRONIC_SHA1_AMD64=5bcefed628e32adc08e32634db2d10e9230dbca0 \
     SUPERCRONIC_SHA1_ARM64=639ab81a72771990790df7ee87d9acfe88e5fa83 \
-    ATATUS_VERSION=1.17.1 \
+    ATATUS_VERSION=1.18.0 \
     HEALTHCHECK_URL=https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck \
     S6_KEEP_ENV=1 \
     S6_FIX_ATTRS_HIDDEN=1 \
@@ -99,18 +99,9 @@ RUN set -eux; \
     mkdir -p /app/public /nhsla; \
     chown -R nhsla:nhsla /app /nhsla; \
     \
-    # PHP config tweaks
-    sed -i \
-        -e 's|variables_order = "GPCS"|variables_order = "EGPCS"|g' \
-        -e 's|;date.timezone =.*|date.timezone = UTC|' \
-        -e 's|upload_max_filesize = .*|upload_max_filesize = 1G|' \
-        -e 's|post_max_size = .*|post_max_size = 512M|' \
-        -e 's|;cgi.fix_pathinfo=1|cgi.fix_pathinfo=0|' \
-        /etc/php/${PHP_VERSION}/fpm/php.ini; \
-    sed -i \
-        -e 's|;clear_env = no|clear_env = no|g' \
-        -e 's|;catch_workers_output = .*|catch_workers_output = yes|' \
-        /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf; \
+    # PHP-FPM master config tweaks. Note: php.ini and www.conf are supplied
+    # wholesale via the /nhsla/etc symlinks below, so only php-fpm.conf (which
+    # is not symlinked) is edited in place here.
     sed -i \
         -e 's|error_log =.*|error_log = /dev/stderr|' \
         -e 's|;daemonize\s*=\s*yes|daemonize = no|g' \
@@ -121,8 +112,8 @@ RUN set -eux; \
     # Symlink config files to /nhsla/etc/
     rm -f /etc/php/${PHP_VERSION}/fpm/php.ini \
           /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
-          /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini \
-          /etc/php/${PHP_VERSION}/cli/conf.d/20-atatus.ini; \
+          /etc/php/${PHP_VERSION}/fpm/conf.d/atatus.ini \
+          /etc/php/${PHP_VERSION}/cli/conf.d/atatus.ini; \
     ln -s /nhsla/etc/php.ini /etc/php/${PHP_VERSION}/fpm/php.ini; \
     ln -s /nhsla/etc/www.conf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf; \
     ln -s /nhsla/etc/atatus.ini /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini; \

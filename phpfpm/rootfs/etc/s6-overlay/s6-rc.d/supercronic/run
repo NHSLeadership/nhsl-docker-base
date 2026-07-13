@@ -1,5 +1,8 @@
 #!/command/with-contenv bash
 
 if [ "$ROLE" == "CRON" ] || [ "$ROLE" == "WORKER" ] || [ "$ROLE" == "MONOLITHIC" ]; then
-   /usr/local/bin/supercronic -overlapping -split-logs /nhsla/cron 1>/dev/stdout
+   exec /usr/local/bin/supercronic -overlapping -split-logs /nhsla/cron 1>/dev/stdout
+else
+  # Not a cron/worker role; park so s6 doesn't restart-loop this longrun.
+  exec sleep infinity
 fi

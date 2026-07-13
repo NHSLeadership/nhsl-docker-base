@@ -1,5 +1,8 @@
 #!/command/with-contenv bash
 
 if [ ! "$ROLE" == "CRON" ] && [ ! "$ROLE" == "WORKER" ]; then
-  /usr/local/bin/php-fpm_exporter server --phpfpm.fix-process-count --phpfpm.scrape-uri=tcp://127.0.0.1:9000/status
+  exec /usr/local/bin/php-fpm_exporter server --phpfpm.fix-process-count --phpfpm.scrape-uri=tcp://127.0.0.1:9000/status
+else
+  # Not an FPM role (CRON/WORKER); park so s6 doesn't restart-loop this longrun.
+  exec sleep infinity
 fi

@@ -1,7 +1,7 @@
 FROM ubuntu:noble
 LABEL maintainer="devops@nhsx.uk"
 
-ENV S6_OVERLAY_VERSION=3.2.2.0 \
+ENV S6_OVERLAY_VERSION=3.2.3.0 \
     S6_KEEP_ENV=1 \
     S6_FIX_ATTRS_HIDDEN=1 \
     S6_READ_ONLY_ROOT=1 \
