@@ -89,7 +89,7 @@ request_terminate_timeout = 60s
 
 ### Scaling signal for the HPA
 
-A static, I/O-bound pool can have **all workers busy waiting on a database or upstream API while CPU looks idle** — so a CPU-based HPA may fail to scale out even though requests are queuing behind a full pool. These images already run [`php-fpm_exporter`](https://github.com/sysdiglabs/php-fpm_exporter) (metrics on port `9253`), scraping the pool's `/status` page. Prefer scaling on pool saturation — **active processes / listen queue length** — or on request latency, rather than raw CPU.
+A static, I/O-bound pool can have **all workers busy waiting on a database or upstream API while CPU looks idle** — so a CPU-based HPA may fail to scale out even though requests are queuing behind a full pool. These images already run [`php-fpm_exporter`](https://github.com/sysdiglabs/php-fpm_exporter) (metrics on port `9253`), scraping the pool's `/status` page. Status is served on a dedicated listener (`pm.status_listen = 127.0.0.1:9001`) so metrics and `php-fpm-healthcheck` keep responding when every worker is busy; if you override `www.conf`, keep that line. Prefer scaling on pool saturation — **active processes / listen queue length** — or on request latency, rather than raw CPU.
 
 ## Environment Variables
 
