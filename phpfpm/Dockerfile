@@ -13,6 +13,7 @@ ENV S6_OVERLAY_VERSION=3.2.3.0 \
     SUPERCRONIC_SHA1_ARM64=639ab81a72771990790df7ee87d9acfe88e5fa83 \
     ATATUS_VERSION=1.18.0 \
     HEALTHCHECK_URL=https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck \
+    FCGI_CONNECT=127.0.0.1:9001 \
     S6_KEEP_ENV=1 \
     S6_FIX_ATTRS_HIDDEN=1 \
     S6_READ_ONLY_ROOT=1 \
