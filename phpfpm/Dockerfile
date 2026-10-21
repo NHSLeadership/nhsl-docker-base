@@ -55,14 +55,14 @@ RUN set -eux; \
     tar -C / -Jxpf /tmp/s6-arch.tar.xz; \
     rm /tmp/s6-*.tar.xz; \
     \
-    # Set up Ondrej PHP PPA (signed-by, no apt-key)
-    mkdir -p /etc/apt/keyrings; \
+    # Set up Sury PHP apt repo (signed-by keyring package, no apt-key)
     curl --proto "=https" --tlsv1.3 -fsSL \
-        "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x4F4EA0AAE5267A6C" \
-        -o /etc/apt/keyrings/ondrej-php.asc; \
+        https://packages.sury.org/debsuryorg-archive-keyring.deb \
+        -o /tmp/debsuryorg-archive-keyring.deb; \
+    dpkg -i /tmp/debsuryorg-archive-keyring.deb; \
     . /etc/os-release; \
-    echo "deb [signed-by=/etc/apt/keyrings/ondrej-php.asc] https://ppa.launchpadcontent.net/ondrej/php/ubuntu ${VERSION_CODENAME} main" \
-        > /etc/apt/sources.list.d/ondrej-php.list; \
+    echo "deb [signed-by=/usr/share/keyrings/debsuryorg-archive-keyring.gpg] https://packages.sury.org/php/ ${VERSION_CODENAME} main" \
+        > /etc/apt/sources.list.d/php.list; \
     apt-get update; \
     apt-get install -y --no-install-recommends ${PHP_PACKAGES}; \
     \

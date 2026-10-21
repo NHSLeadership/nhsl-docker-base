@@ -1,6 +1,6 @@
 # Base Docker Images
 
-> Clean and functional base images providing PHP versions 7.2 to 8.5 and OpenResty web server.
+> Clean and functional base images providing PHP versions 8.2 to 8.4 and OpenResty web server.
 >
 > By NHS Leadership Academy
 
@@ -17,15 +17,9 @@ This README will assume Kubernetes for context and so may make references to Kub
 Images are currently built and pushed to GitHub's container registry. Available tags are:
 
 - `ghcr.io/nhsleadership/nhsl-ubuntu-openresty:latest`
-- `ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:7.2-master`
-- `ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:7.3-master`
-- `ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:7.4-master`
-- `ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:8.0-master`
-- `ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:8.1-master`
 - `ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:8.2-master`
 - `ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:8.3-master`
 - `ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:8.4-master`
-- `ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:8.5-master`
 
 ## Assumptions
 
