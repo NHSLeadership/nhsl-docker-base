@@ -24,6 +24,8 @@ ENV S6_OVERLAY_VERSION=3.2.3.0 \
 COPY --chown=1000:1000 /rootfs/ /
 
 RUN set -eux; \
+    # Retry transient apt download failures (the Launchpad PPA intermittently returns 503s)
+    echo 'Acquire::Retries "5";' > /etc/apt/apt.conf.d/80-retries; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
         busybox-static \
@@ -57,7 +59,7 @@ RUN set -eux; \
     \
     # Set up Ondrej PHP PPA (signed-by, no apt-key)
     mkdir -p /etc/apt/keyrings; \
-    curl --proto "=https" --tlsv1.3 -fsSL \
+    curl --proto "=https" --tlsv1.3 --retry 5 --retry-all-errors -fsSL \
         "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x4F4EA0AAE5267A6C" \
         -o /etc/apt/keyrings/ondrej-php.asc; \
     . /etc/os-release; \
