@@ -24,6 +24,8 @@ ENV S6_OVERLAY_VERSION=3.2.3.0 \
 COPY --chown=1000:1000 /rootfs/ /
 
 RUN set -eux; \
+    # Retry transient apt download failures (the Launchpad PPA intermittently returns 503s)
+    echo 'Acquire::Retries "5";' > /etc/apt/apt.conf.d/80-retries; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
         busybox-static \
@@ -55,14 +57,14 @@ RUN set -eux; \
     tar -C / -Jxpf /tmp/s6-arch.tar.xz; \
     rm /tmp/s6-*.tar.xz; \
     \
-    # Set up Sury PHP apt repo (signed-by keyring package, no apt-key)
-    curl --proto "=https" --tlsv1.3 -fsSL \
-        https://packages.sury.org/debsuryorg-archive-keyring.deb \
-        -o /tmp/debsuryorg-archive-keyring.deb; \
-    dpkg -i /tmp/debsuryorg-archive-keyring.deb; \
+    # Set up Ondrej PHP PPA (signed-by, no apt-key)
+    mkdir -p /etc/apt/keyrings; \
+    curl --proto "=https" --tlsv1.3 --retry 5 --retry-all-errors -fsSL \
+        "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x4F4EA0AAE5267A6C" \
+        -o /etc/apt/keyrings/ondrej-php.asc; \
     . /etc/os-release; \
-    echo "deb [signed-by=/usr/share/keyrings/debsuryorg-archive-keyring.gpg] https://packages.sury.org/php/ ${VERSION_CODENAME} main" \
-        > /etc/apt/sources.list.d/php.list; \
+    echo "deb [signed-by=/etc/apt/keyrings/ondrej-php.asc] https://ppa.launchpadcontent.net/ondrej/php/ubuntu ${VERSION_CODENAME} main" \
+        > /etc/apt/sources.list.d/ondrej-php.list; \
     apt-get update; \
     apt-get install -y --no-install-recommends ${PHP_PACKAGES}; \
     \
