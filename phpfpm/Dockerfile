@@ -25,7 +25,10 @@ COPY --chown=1000:1000 /rootfs/ /
 
 RUN set -eux; \
     # Retry transient apt download failures (the Launchpad PPA intermittently returns 503s)
-    echo 'Acquire::Retries "5";' > /etc/apt/apt.conf.d/80-retries; \
+    # and treat an index that still fails to download as an error, rather than silently
+    # falling back to Ubuntu's own (older) PHP packages.
+    printf '%s\n' 'Acquire::Retries "30";' 'Acquire::https::Timeout "30";' 'APT::Update::Error-Mode "any";' \
+        > /etc/apt/apt.conf.d/80-retries; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
         busybox-static \
@@ -67,6 +70,15 @@ RUN set -eux; \
         > /etc/apt/sources.list.d/ondrej-php.list; \
     apt-get update; \
     apt-get install -y --no-install-recommends ${PHP_PACKAGES}; \
+    \
+    # Fail the build if PHP did not come from the Sury PPA (e.g. an Ubuntu fallback)
+    for pkg in php${PHP_VERSION}-cli php${PHP_VERSION}-fpm; do \
+        ver="$(dpkg-query -W -f='${Version}' "$pkg")"; \
+        case "$ver" in \
+            *deb.sury.org*) echo "$pkg $ver" ;; \
+            *) echo "ERROR: $pkg $ver is not from the Sury PPA" >&2; exit 1 ;; \
+        esac; \
+    done; \
     \
     # PHP-FPM health check
     curl --proto "=https" --tlsv1.3 -fsSL "$HEALTHCHECK_URL" -o /usr/local/bin/php-fpm-healthcheck; \
