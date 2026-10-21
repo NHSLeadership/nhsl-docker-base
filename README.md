@@ -1,6 +1,6 @@
 # Base Docker Images
 
-> Clean and functional base images providing PHP versions 8.2 to 8.4 and OpenResty web server.
+> Clean and functional base images providing PHP versions 8.2 to 8.5 and OpenResty web server.
 >
 > By NHS Leadership Academy
 
@@ -20,6 +20,7 @@ Images are currently built and pushed to GitHub's container registry. Available 
 - `ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:8.2-master`
 - `ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:8.3-master`
 - `ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:8.4-master`
+- `ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:8.5-master`
 
 ## Assumptions
 
