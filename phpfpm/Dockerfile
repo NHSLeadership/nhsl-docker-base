@@ -132,6 +132,10 @@ RUN set -eux; \
     ln -s /nhsla/etc/php.ini /etc/php/${PHP_VERSION}/fpm/php.ini; \
     ln -s /nhsla/etc/www.conf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf; \
     ln -s /nhsla/etc/atatus.ini /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini; \
+    # CLI overrides point at /nhsla/setup (baked into the image) rather than
+    # /nhsla/etc, so they also apply when /init (and 01-boot.sh) hasn't run,
+    # e.g. Kubernetes Jobs, docker run/exec overrides and downstream RUN steps.
+    ln -s /nhsla/setup/php-cli.ini /etc/php/${PHP_VERSION}/cli/conf.d/99-nhsla-cli.ini; \
     ln -s /etc/php/${PHP_VERSION}/fpm /etc/php/fpm; \
     ln -s /etc/php/${PHP_VERSION}/cli /etc/php/cli; \
     rm -f /etc/ssmtp/ssmtp.conf; \

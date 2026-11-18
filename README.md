@@ -57,6 +57,10 @@ php.ini: `/nhsla/etc/php.ini`
 www pool: `/nhsla/etc/www.conf`
 additional configuration files may be added into `/etc/php/fpm/conf.d/*.ini`
 
+**PHP CLI** (cron, wp-cli, artisan, etc.):
+The CLI uses Ubuntu's stock `/etc/php/cli/php.ini`, plus `/etc/php/cli/conf.d/99-nhsla-cli.ini` (from `/nhsla/setup/php-cli.ini`), which sets `variables_order = "EGPCS"` so `$_ENV` is populated as it is under PHP-FPM.
+additional configuration files may be added into `/etc/php/cli/conf.d/*.ini`
+
 ## Scaling PHP-FPM
 
 These images are designed to scale **horizontally**: the OpenResty and PHP-FPM containers run together in a Pod, and you add capacity by increasing the replica count (typically via an HPA), not by growing the number of workers inside a Pod.
