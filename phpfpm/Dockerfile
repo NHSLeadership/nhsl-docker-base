@@ -11,7 +11,6 @@ ENV S6_OVERLAY_VERSION=3.2.3.0 \
     SUPERCRONIC_VERSION=0.2.46 \
     SUPERCRONIC_SHA1_AMD64=5bcefed628e32adc08e32634db2d10e9230dbca0 \
     SUPERCRONIC_SHA1_ARM64=639ab81a72771990790df7ee87d9acfe88e5fa83 \
-    ATATUS_VERSION=1.18.0 \
     HEALTHCHECK_URL=https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck \
     FCGI_CONNECT=127.0.0.1:9001 \
     S6_KEEP_ENV=1 \
@@ -47,8 +46,8 @@ RUN set -eux; \
     # Resolve target architecture
     DPKG_ARCH="$(dpkg --print-architecture)"; \
     case "$DPKG_ARCH" in \
-        amd64) S6_ARCH="x86_64";  SUPERCRONIC_ARCH="amd64"; SUPERCRONIC_SHA1="${SUPERCRONIC_SHA1_AMD64}"; ATATUS_TAR_ARCH="x64"   ;; \
-        arm64) S6_ARCH="aarch64"; SUPERCRONIC_ARCH="arm64"; SUPERCRONIC_SHA1="${SUPERCRONIC_SHA1_ARM64}"; ATATUS_TAR_ARCH="arm64" ;; \
+        amd64) S6_ARCH="x86_64";  SUPERCRONIC_ARCH="amd64"; SUPERCRONIC_SHA1="${SUPERCRONIC_SHA1_AMD64}" ;; \
+        arm64) S6_ARCH="aarch64"; SUPERCRONIC_ARCH="arm64"; SUPERCRONIC_SHA1="${SUPERCRONIC_SHA1_ARM64}" ;; \
         *) echo "Unsupported architecture: $DPKG_ARCH" >&2; exit 1 ;; \
     esac; \
     \
@@ -89,16 +88,6 @@ RUN set -eux; \
         | php -- --install-dir=/usr/local/bin --filename=composer; \
     chmod +x /usr/local/bin/composer; \
     \
-    # Atatus PHP agent (tarball install — supports both amd64 and arm64)
-    ATATUS_DIR="atatus-php-${ATATUS_VERSION}-${ATATUS_TAR_ARCH}-debian"; \
-    curl --proto "=https" --tlsv1.3 -fsSL \
-        "https://s3.amazonaws.com/atatus-artifacts/atatus-php/downloads/${ATATUS_DIR}.tar.gz" \
-        -o /tmp/atatus.tar.gz; \
-    tar -xzf /tmp/atatus.tar.gz -C /tmp; \
-    ATATUS_LICENSE_KEY="placeholder" ATATUS_APP_NAME="placeholder" \
-        bash /tmp/${ATATUS_DIR}/install.sh; \
-    rm -rf /tmp/atatus.tar.gz /tmp/${ATATUS_DIR}; \
-    \
     # Supercronic
     SUPERCRONIC="supercronic-linux-${SUPERCRONIC_ARCH}"; \
     curl --proto "=https" --tlsv1.3 -fsSLO \
@@ -126,12 +115,9 @@ RUN set -eux; \
     \
     # Symlink config files to /nhsla/etc/
     rm -f /etc/php/${PHP_VERSION}/fpm/php.ini \
-          /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
-          /etc/php/${PHP_VERSION}/fpm/conf.d/atatus.ini \
-          /etc/php/${PHP_VERSION}/cli/conf.d/atatus.ini; \
+          /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf; \
     ln -s /nhsla/etc/php.ini /etc/php/${PHP_VERSION}/fpm/php.ini; \
     ln -s /nhsla/etc/www.conf /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf; \
-    ln -s /nhsla/etc/atatus.ini /etc/php/${PHP_VERSION}/fpm/conf.d/20-atatus.ini; \
     # CLI overrides point at /nhsla/setup (baked into the image) rather than
     # /nhsla/etc, so they also apply when /init (and 01-boot.sh) hasn't run,
     # e.g. Kubernetes Jobs, docker run/exec overrides and downstream RUN steps.
