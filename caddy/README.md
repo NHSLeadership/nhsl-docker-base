@@ -10,6 +10,8 @@ for `nhsla`, and our config. There's no OS, shell or package manager, so
 there's very little for a vulnerability scanner to flag, and very little an
 attacker could use.
 
+**Moving a chart from OpenResty?** See [MIGRATING.md](MIGRATING.md).
+
 Configuration that every site needs lives in the image:
 - error pages
 - `security.txt`
@@ -40,7 +42,7 @@ ghcr.io/nhsleadership/nhsl-caddy:master   # latest build from master
     moodle5.caddy       Moodle 5.x (r.php router, X-Accel-Redirect downloads)
   site.d/*.caddy        per-site additions: mount a ConfigMap here (empty by default)
   php.d/*.caddy         extra php_fastcgi subdirectives: mount a ConfigMap here
-/srv/errors/error.html  one error page, templated for each status code
+/srv/errors/error.html  one error page (16 KB), templated for each status code
 /srv/well-known/        put security.txt here to serve /.well-known/security.txt
 ```
 

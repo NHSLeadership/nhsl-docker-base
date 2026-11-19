@@ -25,7 +25,7 @@ Images are currently built and pushed to GitHub's container registry. Available 
 
 ## Caddy
 
-`caddy/` builds `nhsl-caddy`, a replacement for the OpenResty image. It's built `FROM scratch` and contains only the static Caddy binary from the official image, plus our config. Shared configuration (error pages, path blocking, security.txt, headers, logging, metrics) is baked in. Each site chooses a profile (`laravel`, `wordpress`, `moodle` or `moodle5`) with `NHSLA_PROFILE`, and can mount small `*.caddy` additions. See [caddy/README.md](caddy/README.md).
+`caddy/` builds `nhsl-caddy`, a replacement for the OpenResty image. It's built `FROM scratch` and contains only the static Caddy binary from the official image, plus our config. Shared configuration (error pages, path blocking, security.txt, headers, logging, metrics) is baked in. Each site chooses a profile (`laravel`, `wordpress`, `moodle` or `moodle5`) with `NHSLA_PROFILE`, and can mount small `*.caddy` additions. See [caddy/README.md](caddy/README.md) for the image, and [caddy/MIGRATING.md](caddy/MIGRATING.md) for moving a chart over from OpenResty.
 
 ## Assumptions
 
