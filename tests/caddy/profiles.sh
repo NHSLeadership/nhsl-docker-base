@@ -28,7 +28,7 @@ head -c 2000000 /dev/zero > "$T/big"
 A=$T/apps; D=$T/data
 export XDG_DATA_HOME=$T/xdg XDG_CONFIG_HOME=$T/xdg SITE_NAME=e2e NHSLA_MAX_BODY_SIZE=1MB
 mkdir -p "$A" "$D"
-dump='<?php header("Content-Type: text/plain"); foreach (["SCRIPT_NAME","SCRIPT_FILENAME","PATH_INFO","REQUEST_URI","QUERY_STRING","REMOTE_ADDR","HTTP_X_FORWARDED_FOR","HTTP_X_FORWARDED_PROTO","SERVER_NAME","HTTP_HOST","NHSLA_TEST"] as $k) echo "$k=", $_SERVER[$k] ?? "", "\n";'
+dump='<?php header("Content-Type: text/plain"); foreach (["SCRIPT_NAME","SCRIPT_FILENAME","PATH_INFO","REQUEST_URI","QUERY_STRING","REMOTE_ADDR","HTTP_X_FORWARDED_FOR","HTTP_X_FORWARDED_PROTO","SERVER_NAME","HTTP_HOST","SERVER_SOFTWARE","NHSLA_TEST"] as $k) echo "$k=", $_SERVER[$k] ?? "", "\n";'
 mk() { mkdir -p "$(dirname "$1")"; printf '%s' "$2" > "$1"; }
 
 # --- stub apps
@@ -44,7 +44,7 @@ M=$A/moodle
 mk $M/index.php "$dump"; mk $M/course/index.php "$dump"; mk $M/pluginfile.php "$dump"; mk $M/lib/vendor/x.js x; mk $M/README.md x
 mk $M/admin/environment.xml x; mk $M/local/x/readme_moodle.txt x; mk $M/theme/styles.php "$dump"; mk $M/admin/tool/behat/index.php x
 M5=$A/moodle5/public
-mk $M5/index.php "$dump"; mk $M5/r.php "$dump"
+mk $M5/index.php "$dump"; mk $M5/r.php "$dump"; mk $M5/theme/styles.php "$dump"; mk $M5/lib/javascript.php "$dump"
 mk $M5/pluginfile.php '<?php header("Content-Type: application/pdf"); header("Content-Disposition: attachment; filename=\"report.pdf\""); header("X-Accel-Redirect: /dataroot/filedir/ab/cdef"); '
 mk $D/filedir/ab/cdef 'PDFBYTES'
 
@@ -58,8 +58,9 @@ listen = 127.0.0.1:19000
 pm = static
 pm.max_children = 4
 clear_env = no
+security.limit_extensions = .php
 EOF
-"$PHP_FPM" -y $T/fpm.conf & FPM=$!
+"$PHP_FPM" -d cgi.fix_pathinfo=1 -y $T/fpm.conf & FPM=$!
 for i in $(seq 50); do (exec 3<>/dev/tcp/127.0.0.1/19000) 2>/dev/null && break; sleep 0.1; done
 
 C=$T/root/etc/caddy/Caddyfile
@@ -118,6 +119,7 @@ stop
 # ---------------- laravel
 run laravel $L
 check "front controller"                 200 /some/route?x=1 -- 'SCRIPT_NAME=/index.php'
+check "index.php/path slash args"        200 /index.php/foo/bar -- 'PATH_INFO=/foo/bar'
 check "query string kept"                200 /some/route?x=1 -- 'QUERY_STRING=x=1'
 check "X-Forwarded-For kept (trusted)"   200 / -H 'X-Forwarded-For: 203.0.113.9' -- 'HTTP_X_FORWARDED_FOR=203.0.113.9'
 check "X-Forwarded-Proto kept"           200 / -H 'X-Forwarded-Proto: https' -- 'HTTP_X_FORWARDED_PROTO=https'
@@ -130,7 +132,7 @@ stop
 kill $FPM; wait $FPM 2>/dev/null
 check_502() { run laravel $L; check "502 when php-fpm is down" 502 / -- '502 Bad Gateway'; stop; }
 check_502
-"$PHP_FPM" -y $T/fpm.conf & FPM=$!; for i in $(seq 50); do (exec 3<>/dev/tcp/127.0.0.1/19000) 2>/dev/null && break; sleep 0.1; done
+"$PHP_FPM" -d cgi.fix_pathinfo=1 -y $T/fpm.conf & FPM=$!; for i in $(seq 50); do (exec 3<>/dev/tcp/127.0.0.1/19000) 2>/dev/null && break; sleep 0.1; done
 
 # ---------------- wordpress
 run wordpress $W
@@ -173,11 +175,15 @@ check "environment.xml blocked"          404 /admin/environment.xml
 check "readme_moodle.txt blocked"        404 /local/x/readme_moodle.txt
 check "admin/tool/behat blocked"         404 /admin/tool/behat/index.php
 check "X-NHSLA-OSS header"               200 / -- '^x-nhsla-oss: moodle'
+check "SERVER_SOFTWARE says nginx"        200 / -- 'SERVER_SOFTWARE=.*nginx'
 stop
 
 # ---------------- moodle 5.x
 run moodle5 $M5
 check "router for unknown paths"         200 /course/view/42?x=1 -- 'SCRIPT_NAME=/r.php'
+check "styles.php slash args"            200 /theme/styles.php/boost/1/all -- 'PATH_INFO=/boost/1/all'
+check "javascript.php slash args"        200 /lib/javascript.php/1/lib/polyfills/polyfill.js -- 'SCRIPT_NAME=/lib/javascript.php'
+check "SERVER_SOFTWARE says nginx (5.x)"  200 / -- 'SERVER_SOFTWARE=.*nginx'
 check "router keeps request URI"         200 /course/view/42?x=1 -- 'REQUEST_URI=/course/view/42\?x=1'
 check "X-Accel download body"            200 /pluginfile.php/1/f -- 'PDFBYTES'
 check "X-Accel keeps content-disposition" 200 /pluginfile.php/1/f -- 'content-disposition: attachment; filename="report.pdf"'

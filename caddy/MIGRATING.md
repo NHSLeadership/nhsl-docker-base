@@ -50,6 +50,17 @@ In the web container:
 
 In the PHP-FPM container:
 
+7a. **`cgi.fix_pathinfo = 1`** in a PHP ini drop-in (for example the chart's
+   `conf.d` ConfigMap). The base image's `php.ini` sets it to `0`. With `0`,
+   php-fpm takes the script path from `PATH_TRANSLATED`, which Caddy sends as
+   `<root><PATH_INFO>`, and refuses it ("Access denied", 403). That breaks
+   every URL with a path after `.php`: Moodle's `theme/styles.php/…`,
+   `lib/javascript.php/…`, `pluginfile.php/…` (including X-Accel downloads),
+   and `index.php/…`. nginx never sent `PATH_TRANSLATED`, so OpenResty wasn't
+   affected. This is safe with Caddy, because `php_fastcgi` only proxies
+   paths whose `.php` part is an existing file and php-fpm still enforces
+   `security.limit_extensions`.
+
 7. **`lifecycle.preStop.sleep.seconds: 15`.** php-fpm stops immediately on
    SIGTERM. Caddy keeps serving for 5s after SIGTERM and then drains for up
    to 10s, so PHP has to outlive that. Without it, rollouts and HPA scale-in

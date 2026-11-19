@@ -19,6 +19,11 @@ header X-NHSLA-OSS moodle
 php_fastcgi @nhsla_moodle_exists {$NHSLA_PHP_UPSTREAM:127.0.0.1:9000} {
 	try_files {path} {path}/index.php
 	read_timeout {$NHSLA_PHP_TIMEOUT:600s}
+	# Moodle's setup_get_remote_url() only accepts web servers it recognises
+	# (Apache, IIS, nginx, …). Moodle 4.x throws "Web server software
+	# (Caddy/…) is not supported". Its nginx branch only needs SCRIPT_NAME,
+	# which Caddy sends, so identify as nginx-compatible.
+	env SERVER_SOFTWARE "Caddy (nginx-compatible)"
 	import /etc/caddy/php.d/*.caddy
 }
 
