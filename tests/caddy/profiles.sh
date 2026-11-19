@@ -28,7 +28,7 @@ head -c 2000000 /dev/zero > "$T/big"
 A=$T/apps; D=$T/data
 export XDG_DATA_HOME=$T/xdg XDG_CONFIG_HOME=$T/xdg SITE_NAME=e2e NHSLA_MAX_BODY_SIZE=1MB
 mkdir -p "$A" "$D"
-dump='<?php header("Content-Type: text/plain"); foreach (["SCRIPT_NAME","SCRIPT_FILENAME","PATH_INFO","REQUEST_URI","QUERY_STRING","REMOTE_ADDR","HTTP_X_FORWARDED_FOR","HTTP_X_FORWARDED_PROTO","SERVER_NAME","NHSLA_TEST"] as $k) echo "$k=", $_SERVER[$k] ?? "", "\n";'
+dump='<?php header("Content-Type: text/plain"); foreach (["SCRIPT_NAME","SCRIPT_FILENAME","PATH_INFO","REQUEST_URI","QUERY_STRING","REMOTE_ADDR","HTTP_X_FORWARDED_FOR","HTTP_X_FORWARDED_PROTO","SERVER_NAME","HTTP_HOST","NHSLA_TEST"] as $k) echo "$k=", $_SERVER[$k] ?? "", "\n";'
 mk() { mkdir -p "$(dirname "$1")"; printf '%s' "$2" > "$1"; }
 
 # --- stub apps
@@ -141,6 +141,17 @@ grep -q EXECUTED $T/body && { fail=$((fail+1)); echo "  FAIL uploads PHP execute
 check "plugin vendor asset allowed"      200 /wp-content/plugins/p/vendor/lib.js
 check "static cached 12h"                200 /wp-content/themes/t/style.css -- 'cache-control: max-age=43200'
 check "multisite still blocks .env"      404 /site1/.env
+# Subdomain multisite with mapped domains (wp-multisite): WordPress picks the
+# site from the Host header, and the subdirectory rewrites must not get in the way
+check "subdomain: Host reaches PHP"      200 /about-us/ -H 'Host: london.leadershipacademy.nhs.uk' -- 'HTTP_HOST=london\.leadershipacademy\.nhs\.uk'
+check "subdomain: SERVER_NAME"           200 /about-us/ -H 'Host: london.leadershipacademy.nhs.uk' -- 'SERVER_NAME=london\.leadershipacademy\.nhs\.uk'
+check "mapped domain: Host reaches PHP"  200 / -H 'Host: topol.digitalacademy.nhs.uk' -- 'HTTP_HOST=topol\.digitalacademy\.nhs\.uk'
+check "subdomain: wp-login.php"          200 /wp-login.php -H 'Host: eoe.leadershipacademy.nhs.uk' -- 'SCRIPT_NAME=/wp-login\.php'
+check "subdomain: wp-admin/options.php"  200 /wp-admin/options.php -H 'Host: eoe.leadershipacademy.nhs.uk' -- 'HTTP_HOST=eoe\.leadershipacademy\.nhs\.uk'
+check "subdomain: wp-admin redirect keeps host" 301 /wp-admin -H 'Host: eoe.leadershipacademy.nhs.uk' -- '^location: /wp-admin/'
+check "subdomain: page slug + /wp- path" 200 '/category/wp-tips/?x=1' -H 'Host: eoe.leadershipacademy.nhs.uk' -- 'REQUEST_URI=/category/wp-tips/\?x=1'
+check "subdomain: REST API"              200 /wp-json/wp/v2/posts -H 'Host: eoe.leadershipacademy.nhs.uk' -- 'REQUEST_URI=/wp-json/wp/v2/posts'
+check "subdomain: static asset"          200 /wp-content/themes/t/style.css -H 'Host: eoe.leadershipacademy.nhs.uk' -- 'cache-control: max-age=43200' 
 stop
 
 # ---------------- moodle 4.x
