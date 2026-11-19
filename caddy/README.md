@@ -43,7 +43,7 @@ ghcr.io/nhsleadership/nhsl-caddy:master   # latest build from master
   site.d/*.caddy        per-site additions: mount a ConfigMap here (empty by default)
   php.d/*.caddy         extra php_fastcgi subdirectives: mount a ConfigMap here
 /srv/errors/error.html  one error page (16 KB), templated for each status code
-/srv/well-known/        put security.txt here to serve /.well-known/security.txt
+/srv/well-known/security.txt  served at /.well-known/security.txt on every site
 ```
 
 Every site gets:
@@ -135,9 +135,18 @@ priority over the profile's PHP and static-file handling.
 
 ## security.txt
 
-The image serves `/.well-known/security.txt` only if `/srv/well-known/security.txt`
-exists. Otherwise the request goes to the app as usual. RFC 9116 requires an
-`Expires` date less than a year ahead, so keep it current.
+Every site serves the same [RFC 9116](https://www.rfc-editor.org/rfc/rfc9116)
+file at `/.well-known/security.txt`, from
+[`rootfs/srv/well-known/security.txt`](rootfs/srv/well-known/security.txt). It's
+sent as `text/plain` and the app is never involved. If the file is removed (or
+a site mounts an empty directory over `/srv/well-known`), the request goes to
+the app as usual.
+
+**`Expires` must stay in the future, and no more than a year ahead.** An
+expired file tells researchers the contact details are stale. The smoke test
+fails once `Expires` is 30 days or less away, so the weekly scheduled build
+gives a month's warning. To renew it, set `Expires` to about a year ahead and
+merge. The next image build publishes it to every site.
 
 ## Running in Kubernetes
 

@@ -88,12 +88,12 @@ stop() { kill $CADDY_PID 2>/dev/null; wait $CADDY_PID 2>/dev/null; }
 sleep 0.5
 
 # ---------------- shared behaviour (on the laravel profile)
-mkdir -p $T/root/srv/well-known; echo 'Contact: mailto:test@example.invalid' > $T/root/srv/well-known/security.txt
 printf 'respond /site-d-test "site.d works" 200\nhandle /proxied.js {\n\trespond "site.d js" 200\n}\n' > $T/root/etc/caddy/site.d/test.caddy
 echo 'env NHSLA_TEST php.d-works' > $T/root/etc/caddy/php.d/test.caddy
 run laravel $L NHSLA_PHP_TIMEOUT=2s
 check "healthz"                          200 /healthz -- '^OK'
-check "security.txt served"              200 /.well-known/security.txt -- 'Contact: mailto'
+check "security.txt served"              200 /.well-known/security.txt -- '^Contact: mailto:england\.la-digital-team@nhs\.net'
+check "security.txt is text/plain"       200 /.well-known/security.txt -- '^content-type: text/plain'
 check "other .well-known reaches app"    200 /.well-known/acme.txt -- 'acme'
 check ".env blocked"                     404 /.env -- '404 Page Not Found'
 check ".git/config blocked"              404 /.git/config

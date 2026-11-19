@@ -46,6 +46,14 @@ check ".git/config blocked"                404 /.git/config
 check "composer.json blocked"              404 /composer.json
 check "backup.sql blocked"                 404 /backup.sql
 check ".well-known not blocked"            200 /.well-known/anything -- 'SCRIPT_NAME.{0,20}/index\.php'
+check "security.txt served"                200 /.well-known/security.txt -- '^Contact: mailto:'
+# RFC 9116: Expires must be in the future (and under a year away). Fail a
+# month ahead so the weekly scheduled build gives warning.
+exp=$(grep -i '^Expires:' "$TMP/body" | awk '{print $2}' | tr -d '\r')
+exp_s=$(date -u -d "$exp" +%s 2>/dev/null || date -u -j -f '%Y-%m-%dT%H:%M:%SZ' "$exp" +%s 2>/dev/null || echo 0)
+days=$(( (exp_s - $(date -u +%s)) / 86400 ))
+if (( days > 30 && days <= 366 )); then pass=$((pass+1)); echo "ok   security.txt Expires in $days days"
+else fail=$((fail+1)); echo "FAIL security.txt Expires ($exp) is $days days away: update caddy/rootfs/srv/well-known/security.txt"; fi
 check "413 over body limit"                413 / -X POST -H 'Content-Length: 1073741825' -H 'Content-Type: application/octet-stream' --data-binary ''
 
 got=$(curl -s -o "$TMP/m" -w '%{http_code}' "$METRICS/metrics")
