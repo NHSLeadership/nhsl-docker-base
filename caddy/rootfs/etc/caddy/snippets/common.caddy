@@ -1,0 +1,87 @@
+# Snippets shared by every site. The base Caddyfile imports these, and
+# profiles can import the opt-in ones (nhsla_block_source, nhsla_static_cache).
+
+(nhsla_headers) {
+	header {
+		X-NHSLA-Pod {system.hostname}
+		X-NHSLA-Site {$SITE_NAME:unknown}
+		-Server
+	}
+}
+
+(nhsla_healthz) {
+	respond /healthz "OK" 200
+	log_skip /healthz
+}
+
+(nhsla_access_log) {
+	log {
+		output stdout
+		format json
+	}
+}
+
+# Errors Caddy raises itself (blocked paths, missing files, 502 and 504).
+# One template covers every status code. Errors returned by the app pass
+# through unchanged.
+(nhsla_errors) {
+	handle_errors {
+		import nhsla_headers
+		# An error can arrive with headers already copied from the app (e.g. a
+		# Moodle X-Accel download whose file is missing). Reset them so the page
+		# is HTML and the template runs.
+		header Content-Type "text/html; charset=utf-8"
+		header -Content-Disposition
+		root * /srv/errors
+		rewrite * /error.html
+		templates
+		file_server
+	}
+}
+
+# Served only if the image (or a mount) provides /srv/well-known/security.txt
+(nhsla_security_txt) {
+	@nhsla_security_txt {
+		path /.well-known/security.txt
+		file {
+			root /srv/well-known
+			try_files /security.txt
+		}
+	}
+	handle @nhsla_security_txt {
+		root * /srv/well-known
+		rewrite * /security.txt
+		file_server
+	}
+}
+
+# Applied to every site
+(nhsla_block_common) {
+	# Dotfiles and dot-directories (.env, .git, .htaccess…), except /.well-known
+	@nhsla_dotfiles {
+		path_regexp nhsla_dotfiles /\.
+		not path /.well-known/*
+	}
+	error @nhsla_dotfiles 404
+
+	# Backups, config, logs, dumps, scripts, editor leftovers and composer files
+	@nhsla_sensitive path_regexp nhsla_sensitive (?i)(\.(bak|dist|conf|ya?ml|cfg|fla|in[ci]|log|psd|sh|sql)|~)$|/composer\.(json|lock)$
+	error @nhsla_sensitive 404
+}
+
+# Opt-in, for apps that serve their whole source tree (Moodle). Not for Laravel,
+# which serves public/vendor/livewire, or WordPress, where plugins serve assets
+# from their own vendor/ folders.
+(nhsla_block_source) {
+	@nhsla_source path_regexp nhsla_source (?i)/(vendor|node_modules|behat|fixtures)(/|$)|/readme[^/]*$|\.md$|/upgrade(\.txt)?$|/(environment|install|phpunit)\.xml(\.dist)?$|doesnotexist
+	error @nhsla_source 404
+}
+
+# Opt-in browser caching for static assets that exist. Argument: max-age in seconds.
+(nhsla_static_cache) {
+	@nhsla_static {
+		path_regexp nhsla_static (?i)\.(js|css|png|jpe?g|gif|ico)$
+		file
+	}
+	header @nhsla_static Cache-Control "max-age={args[0]}"
+}

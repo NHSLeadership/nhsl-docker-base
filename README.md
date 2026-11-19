@@ -21,6 +21,11 @@ Images are currently built and pushed to GitHub's container registry. Available 
 - `ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:8.3-master`
 - `ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:8.4-master`
 - `ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:8.5-master`
+- `ghcr.io/nhsleadership/nhsl-caddy:<caddy version>` (e.g. `2.11.9`), `:master`, `:latest`
+
+## Caddy
+
+`caddy/` builds `nhsl-caddy`, a replacement for the OpenResty image based on the official Caddy image. Shared configuration (error pages, path blocking, security.txt, headers, logging, metrics) is baked in. Each site chooses a profile (`laravel`, `wordpress`, `moodle` or `moodle5`) with `NHSLA_PROFILE`, and can mount small `*.caddy` additions. See [caddy/README.md](caddy/README.md).
 
 ## Assumptions
 

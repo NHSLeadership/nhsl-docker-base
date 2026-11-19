@@ -13,6 +13,7 @@ help:
 	@echo "Commands:"
 	@echo "    build-all		Builds all PHP and Openresty images with the same tag"
 	@echo "    build-openresty	Builds the NHSLA Openresty image"
+	@echo "    build-caddy		Builds the NHSLA Caddy image"
 	@echo "    build-php82		Builds a PHP 8.2 image"
 	@echo "    build-php82		Builds a PHP 8.3 image"
 	@echo "    build-php83          Builds a PHP 8.3 image"
@@ -24,10 +25,18 @@ help:
 	@echo "    test-php83		Builds and runs a Docker stack on port 8080 to test PHP 8.3"
 	@echo "    test-php84           Builds and runs a Docker stack on port 8080 to test PHP 8.4"
 	@echo "    test-php85           Builds and runs a Docker stack on port 8080 to test PHP 8.5"
+	@echo "    test-caddy		Builds the Caddy image, runs it with PHP-FPM on port 8080 and smoke-tests it"
 	@echo ""
 
 build-all:
 	build-openresty build-php82 build-php83 build-php84 build-php85
+
+build-caddy:
+	docker build --platform linux/amd64,linux/arm64 -t ${REPO}nhsl-caddy:${TAG} -f ./caddy/Dockerfile ./caddy/
+
+test-caddy:
+	docker compose -f tests/caddy/compose.yml up -d --build
+	./tests/caddy/smoke.sh; status=$$?; docker compose -f tests/caddy/compose.yml down -v; exit $$status
 
 build-openresty:
 	docker build --platform linux/amd64,linux/arm64 -t ${REPO}nhsl-ubuntu-openresty:${TAG} -f ./openresty/Dockerfile ./openresty/
