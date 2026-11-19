@@ -33,6 +33,7 @@ absent() { # description header-regex (checked against the last response)
 
 check "healthz"                            200 /healthz -- '^OK'
 check "PHP front controller"               200 /some/route -- 'SCRIPT_NAME.{0,20}/index\.php'
+check "slash args (index.php/foo/bar)"     200 /index.php/foo/bar -- 'PATH_INFO.{0,20}/foo/bar'
 check "PHP runs as nhsla"                  200 / -- 'Process user:</b> nhsla'
 check "X-NHSLA-Site header"                200 / -- '^x-nhsla-site: caddy-test'
 absent "no Server header"                  '^server:'

@@ -21,7 +21,7 @@ services:
       - app-shared:/app-shared
 
   phpfpm:
-    image: ${PHPFPM_IMAGE:-ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:8.4-master}
+    image: ${PHPFPM_IMAGE:-ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:${PHP_VERSION:-8.4}-master}
     read_only: true
     network_mode: "service:caddy"
     environment:
@@ -32,6 +32,8 @@ services:
       - fpm-run:/run
       - fpm-tmp:/tmp
       - fpm-nhsla:/nhsla/etc
+      # What charts must set for Caddy (see caddy/MIGRATING.md)
+      - ./php-caddy.ini:/etc/php/${PHP_VERSION:-8.4}/fpm/conf.d/99-caddy.ini:ro
 
 volumes:
   app-shared:

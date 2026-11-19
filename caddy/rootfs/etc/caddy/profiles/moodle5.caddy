@@ -20,6 +20,11 @@ php_fastcgi {$NHSLA_PHP_UPSTREAM:127.0.0.1:9000} {
 	# Anything that isn't a file goes to Moodle's router
 	try_files {path} {path}/index.php /r.php
 	read_timeout {$NHSLA_PHP_TIMEOUT:600s}
+	# Moodle's setup_get_remote_url() only accepts web servers it recognises
+	# (Apache, IIS, nginx, …). Moodle 4.x throws "Web server software
+	# (Caddy/…) is not supported". Its nginx branch only needs SCRIPT_NAME,
+	# which Caddy sends, so identify as nginx-compatible.
+	env SERVER_SOFTWARE "Caddy (nginx-compatible)"
 
 	# Moodle hands file downloads back to the web server. Serve them from the
 	# dataroot, keeping the headers Moodle set (type, disposition, caching).
