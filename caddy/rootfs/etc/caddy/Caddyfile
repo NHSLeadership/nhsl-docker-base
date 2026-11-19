@@ -1,0 +1,81 @@
+# NHSLA base Caddyfile. Usually you don't override this file. Instead:
+#   - set NHSLA_PROFILE to pick how the app is served (profiles/<name>.caddy)
+#   - mount extra site rules into /etc/caddy/site.d/*.caddy
+#   - mount extra php_fastcgi subdirectives into /etc/caddy/php.d/*.caddy
+# See caddy/README.md in nhsl-docker-base.
+
+{
+	# Behind Traefik: no TLS, no admin API, nothing persisted to disk
+	auto_https off
+	admin off
+	persist_config off
+
+	# Blocking rules run straight after the web root is set, before any of a
+	# profile's rewrites or handle blocks, so every site gets them however its
+	# profile is written. (Not "first": file matchers need the root.)
+	order error after root
+
+	# Kubernetes sends SIGTERM at the same moment it starts removing the pod from
+	# the Service, and Traefik takes a few seconds to stop routing to it. Keep
+	# serving for that long, then give in-flight requests time to finish.
+	# shutdown_delay + grace_period must stay under terminationGracePeriodSeconds.
+	shutdown_delay {$NHSLA_SHUTDOWN_DELAY:5s}
+	grace_period {$NHSLA_GRACE_PERIOD:10s}
+
+	# Label metrics by Host. The site is a catch-all (:8080), and without
+	# observe_catchall_hosts Caddy labels every request host="_other". That's
+	# safe here because Traefik only forwards the hosts it has routes for, so
+	# arbitrary Host headers can't inflate the number of series.
+	metrics {
+		per_host
+		observe_catchall_hosts
+	}
+
+	servers {
+		# Traefik runs on private ranges. Trusting them keeps the incoming
+		# X-Forwarded-* headers, which the apps' trusted-proxy settings rely on.
+		trusted_proxies static private_ranges
+		client_ip_headers X-Forwarded-For
+		timeouts {
+			idle 2m
+		}
+	}
+
+	log {
+		output stderr
+		level {$NHSLA_LOG_LEVEL:WARN}
+	}
+}
+
+import /etc/caddy/snippets/*.caddy
+
+:8080 {
+	import nhsla_headers
+	import nhsla_healthz
+	import nhsla_security_txt
+	import nhsla_block_common
+	import nhsla_errors
+	import nhsla_access_log
+
+	request_body {
+		max_size {$NHSLA_MAX_BODY_SIZE:1GB}
+	}
+
+	encode zstd gzip
+
+	# How to serve this kind of app: web root, PHP handling, app-specific rules
+	import /etc/caddy/profiles/{$NHSLA_PROFILE:laravel}.caddy
+
+	# Per-site additions (e.g. a chart ConfigMap). Empty in the image.
+	import /etc/caddy/site.d/*.caddy
+}
+
+# Prometheus metrics
+:9145 {
+	handle /metrics {
+		metrics
+	}
+	handle {
+		respond 403
+	}
+}

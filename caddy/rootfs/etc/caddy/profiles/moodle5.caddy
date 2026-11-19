@@ -1,0 +1,40 @@
+# Moodle 5.x: public/ is the web root, r.php is the router, and file
+# downloads use X-Accel-Redirect. Used by the moodle5x chart.
+#
+# For X-Accel-Redirect, Moodle needs:
+#   $CFG->xsendfile = 'X-Accel-Redirect';
+#   $CFG->xsendfilealiases = ['/dataroot/' => $CFG->dataroot];
+
+root * {$NHSLA_ROOT:/app-shared/vendor/moodle/moodle/public}
+
+import nhsla_block_source
+
+header {
+	X-NHSLA-OSS moodle
+	X-Frame-Options SAMEORIGIN
+	X-Content-Type-Options nosniff
+	X-XSS-Protection "1; mode=block"
+}
+
+php_fastcgi {$NHSLA_PHP_UPSTREAM:127.0.0.1:9000} {
+	# Anything that isn't a file goes to Moodle's router
+	try_files {path} {path}/index.php /r.php
+	read_timeout {$NHSLA_PHP_TIMEOUT:600s}
+
+	# Moodle hands file downloads back to the web server. Serve them from the
+	# dataroot, keeping the headers Moodle set (type, disposition, caching).
+	@nhsla_accel header X-Accel-Redirect /dataroot/*
+	handle_response @nhsla_accel {
+		root * {$NHSLA_MOODLE_DATAROOT:/efs/data}
+		rewrite * {rp.header.X-Accel-Redirect}
+		uri strip_prefix /dataroot
+		copy_response_headers {
+			exclude X-Accel-Redirect Content-Length
+		}
+		file_server
+	}
+
+	import /etc/caddy/php.d/*.caddy
+}
+
+file_server

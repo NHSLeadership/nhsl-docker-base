@@ -1,0 +1,44 @@
+# Runs the Caddy image the way Kubernetes does (read-only, uid 1000, no
+# capabilities, no privilege escalation) in front of the PHP-FPM image, serving
+# tests/app. Used by `make test-caddy` and the build-caddy workflow.
+services:
+  caddy:
+    build:
+      context: ../../caddy
+    image: nhsl-caddy:test
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    ports:
+      - "8080:8080"
+      - "9145:9145"
+    environment:
+      SITE_NAME: caddy-test
+      NHSLA_PROFILE: laravel
+    tmpfs:
+      - /tmp:uid=1000,gid=1000
+    volumes:
+      - app-shared:/app-shared
+
+  phpfpm:
+    image: ${PHPFPM_IMAGE:-ghcr.io/nhsleadership/nhsl-ubuntu-phpv2:8.4-master}
+    read_only: true
+    network_mode: "service:caddy"
+    environment:
+      AWS_HOST_ENVIRONMENT: "true"
+    volumes:
+      - ../app/:/app/public/:ro
+      - app-shared:/app-shared
+      - fpm-run:/run
+      - fpm-tmp:/tmp
+      - fpm-nhsla:/nhsla/etc
+
+volumes:
+  app-shared:
+    driver_opts: { type: tmpfs, device: tmpfs, o: "size=1g" }
+  fpm-run:
+    driver_opts: { type: tmpfs, device: tmpfs, o: "size=1g" }
+  fpm-tmp:
+    driver_opts: { type: tmpfs, device: tmpfs, o: "size=1g" }
+  fpm-nhsla:
+    driver_opts: { type: tmpfs, device: tmpfs, o: "size=1g" }

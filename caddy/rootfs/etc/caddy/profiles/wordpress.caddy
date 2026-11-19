@@ -1,0 +1,41 @@
+# WordPress, single site or subdirectory multisite.
+# Used by the wordpress, wordpress-multisite and wp-satispress charts
+# (wp-satispress sets NHSLA_ROOT=/gp2/wordpress).
+
+root * {$NHSLA_ROOT:/app-shared/wordpress}
+
+import nhsla_static_cache 43200
+
+# Multisite needs the trailing slash on wp-admin
+@nhsla_wp_admin_noslash path_regexp nhsla_wp_admin_noslash /wp-admin$
+redir @nhsla_wp_admin_noslash {path}/ 301
+
+# Never run PHP that's been uploaded
+@nhsla_wp_uploads_php path_regexp nhsla_wp_uploads_php (?i)^/wp-content/uploads/.*\.php
+error @nhsla_wp_uploads_php 403
+
+# Subdirectory multisite: /<site>/wp-… and /<site>/….php map to the shared
+# files, unless the path exists on disk. Caddy applies only the first
+# rewrite that matches, like nginx's "last".
+@nhsla_ms_wp {
+	not file {path} {path}/
+	path_regexp nhsla_ms_wp ^/[_0-9a-zA-Z-]+(/wp-.*)
+}
+rewrite @nhsla_ms_wp {re.nhsla_ms_wp.1}
+@nhsla_ms_admin_php {
+	not file {path} {path}/
+	path_regexp nhsla_ms_admin_php ^/[_0-9a-zA-Z-]+.*(/wp-admin/.*\.php)$
+}
+rewrite @nhsla_ms_admin_php {re.nhsla_ms_admin_php.1}
+@nhsla_ms_php {
+	not file {path} {path}/
+	path_regexp nhsla_ms_php ^/[_0-9a-zA-Z-]+(/.*\.php)$
+}
+rewrite @nhsla_ms_php {re.nhsla_ms_php.1}
+
+php_fastcgi {$NHSLA_PHP_UPSTREAM:127.0.0.1:9000} {
+	read_timeout {$NHSLA_PHP_TIMEOUT:30s}
+	import /etc/caddy/php.d/*.caddy
+}
+
+file_server

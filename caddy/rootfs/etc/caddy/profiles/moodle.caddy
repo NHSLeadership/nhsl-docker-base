@@ -1,0 +1,25 @@
+# Moodle 4.x: the code is the web root and there's no front controller.
+# Used by the moodle chart.
+
+root * {$NHSLA_ROOT:/app-shared/vendor/moodle/moodle}
+
+import nhsla_block_source
+
+header X-NHSLA-OSS moodle
+
+# No front controller: PHP only handles paths that exist (split_path lets
+# /pluginfile.php/… slash arguments count). Anything else, including a missing
+# .php script, falls through to file_server and gets the 404 page. This is a
+# matcher rather than an early "error", so site.d handlers still get a look in.
+@nhsla_moodle_exists file {
+	try_files {path} {path}/index.php
+	split_path .php
+}
+
+php_fastcgi @nhsla_moodle_exists {$NHSLA_PHP_UPSTREAM:127.0.0.1:9000} {
+	try_files {path} {path}/index.php
+	read_timeout {$NHSLA_PHP_TIMEOUT:600s}
+	import /etc/caddy/php.d/*.caddy
+}
+
+file_server

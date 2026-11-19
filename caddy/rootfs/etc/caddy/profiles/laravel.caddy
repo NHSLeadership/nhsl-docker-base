@@ -1,0 +1,19 @@
+# Laravel, or any front-controller app whose web root is public/.
+# Used by apply, assess, certificates, profileman, profiledashboard and tmdiagnostic.
+
+root * {$NHSLA_ROOT:/app-shared/public}
+
+import nhsla_static_cache 86400
+
+# Asset URLs never go to PHP, so a missing asset gets the 404 page from
+# file_server rather than booting Laravel (as in nginx, whose static location
+# had no try_files). This is a matcher rather than an early "error", so site.d
+# handlers still get a look in.
+@nhsla_not_asset not path_regexp nhsla_asset (?i)\.(js|css|png|jpe?g|gif|ico)$
+
+php_fastcgi @nhsla_not_asset {$NHSLA_PHP_UPSTREAM:127.0.0.1:9000} {
+	read_timeout {$NHSLA_PHP_TIMEOUT:30s}
+	import /etc/caddy/php.d/*.caddy
+}
+
+file_server
