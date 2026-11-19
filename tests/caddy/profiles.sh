@@ -60,7 +60,7 @@ pm.max_children = 4
 clear_env = no
 EOF
 "$PHP_FPM" -y $T/fpm.conf & FPM=$!
-for i in $(seq 50); do nc -z 127.0.0.1 19000 2>/dev/null && break; sleep 0.1; done
+for i in $(seq 50); do (exec 3<>/dev/tcp/127.0.0.1/19000) 2>/dev/null && break; sleep 0.1; done
 
 C=$T/root/etc/caddy/Caddyfile
 pass=0; fail=0
@@ -126,7 +126,7 @@ stop
 kill $FPM; wait $FPM 2>/dev/null
 check_502() { run laravel $L; check "502 when php-fpm is down" 502 / -- '502 Bad Gateway'; stop; }
 check_502
-"$PHP_FPM" -y $T/fpm.conf & FPM=$!; for i in $(seq 50); do nc -z 127.0.0.1 19000 2>/dev/null && break; sleep 0.1; done
+"$PHP_FPM" -y $T/fpm.conf & FPM=$!; for i in $(seq 50); do (exec 3<>/dev/tcp/127.0.0.1/19000) 2>/dev/null && break; sleep 0.1; done
 
 # ---------------- wordpress
 run wordpress $W

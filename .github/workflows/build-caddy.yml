@@ -46,12 +46,17 @@ jobs:
         run: ./tests/caddy/smoke.sh
 
       # Every profile (laravel, wordpress, moodle, moodle5) against stub apps,
-      # using the caddy binary from the image just built and the runner's php-fpm
+      # using the caddy binary from the image just built and the runner's php-fpm.
+      # The runner image already ships php-fpm; only install it (with retries,
+      # since the Ubuntu mirrors can time out) if it's missing.
       - name: Profile tests
         run: |
-          sudo apt-get update -q && sudo apt-get install -yq php-fpm
+          if ! ls /usr/sbin/php-fpm* >/dev/null 2>&1; then
+            sudo apt-get -o Acquire::Retries=5 update -q
+            sudo apt-get -o Acquire::Retries=5 install -yq --no-install-recommends php-fpm
+          fi
           docker cp "$(docker create nhsl-caddy:test)":/usr/bin/caddy /tmp/caddy
-          CADDY=/tmp/caddy PHP_FPM="$(ls /usr/sbin/php-fpm* | head -1)" ./tests/caddy/profiles.sh
+          CADDY=/tmp/caddy PHP_FPM="$(ls /usr/sbin/php-fpm* | sort -V | tail -1)" ./tests/caddy/profiles.sh
 
       - name: Logs on failure
         if: failure()

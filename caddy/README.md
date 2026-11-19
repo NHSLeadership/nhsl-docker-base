@@ -1,8 +1,14 @@
 # nhsl-caddy
 
-A thin layer on the official [Caddy](https://caddyserver.com/) image. It
-replaces OpenResty in front of PHP-FPM, in the same pod layout: Caddy on
-8080, PHP-FPM on 127.0.0.1:9000, and the app shared through `/app-shared`.
+A [Caddy](https://caddyserver.com/) image built `FROM scratch`. It replaces
+OpenResty in front of PHP-FPM, in the same pod layout: Caddy on 8080, PHP-FPM
+on 127.0.0.1:9000, and the app shared through `/app-shared`.
+
+The image contains only the static `caddy` binary (taken from the official
+`caddy:<version>-alpine` image), the CA bundle, `mime.types`, a passwd entry
+for `nhsla`, and our config. There's no OS, shell or package manager, so
+there's very little for a vulnerability scanner to flag, and very little an
+attacker could use.
 
 Configuration that every site needs lives in the image:
 - error pages
@@ -153,8 +159,17 @@ exists. Otherwise the request goes to the app as usual. RFC 9116 requires an
 ```
 
 The image runs as `nhsla` (1000:1000), and only `/tmp` needs to be writable.
-The upstream binary's `cap_net_bind_service` file capability is removed, so
-`allowPrivilegeEscalation: false` and dropping all capabilities both work.
+The upstream binary's `cap_net_bind_service` file capability is removed (and
+the build checks it), so `allowPrivilegeEscalation: false` and dropping all
+capabilities both work.
+
+There's no shell, so `kubectl exec … sh` won't work. To look inside a running
+pod, attach a debug container that shares its process namespace:
+
+```bash
+kubectl debug -it <pod> --image=busybox --target=<caddy container> -- sh
+# the caddy container's filesystem is at /proc/1/root
+```
 
 ## Testing
 
