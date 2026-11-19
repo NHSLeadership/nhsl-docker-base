@@ -25,8 +25,8 @@ A site picks a **profile** for its app type, and can add a few lines of its
 own if it needs to.
 
 ```
-ghcr.io/nhsleadership/nhsl-caddy:2.11.9   # upstream Caddy version, rebuilt weekly. Pin this one.
-ghcr.io/nhsleadership/nhsl-caddy:master   # latest build from master
+ghcr.io/nhsleadership/nhsl-caddy:latest   # newest build from master. What the charts use, with imagePullPolicy: Always
+ghcr.io/nhsleadership/nhsl-caddy:2.11.9   # the same build, tagged with the upstream Caddy version, for pinning
 ```
 
 ## How the config fits together
@@ -152,7 +152,8 @@ merge. The next image build publishes it to every site.
 
 ```yaml
 - name: web
-  image: ghcr.io/nhsleadership/nhsl-caddy:2.11.9
+  image: ghcr.io/nhsleadership/nhsl-caddy:latest
+  imagePullPolicy: Always   # otherwise nodes keep using a cached "latest"
   env:
     - { name: NHSLA_PROFILE, value: laravel }
     - { name: SITE_NAME, value: profiledashboard }
@@ -225,27 +226,45 @@ handlers. For dashboards and alerts, use:
   security.txt or `site.d` handlers.
 - `handler="file_server"` for static files and Caddy's own error pages
 
-Our vmagent discovers pods through `prometheus.io/*` annotations, which allow
-one port per pod, and that port is PHP-FPM's 9253. To scrape Caddy as well,
-add a job that finds the container port by name, and let VictoriaMetrics reach
-9145 in the chart's CiliumNetworkPolicy:
+Metrics are collected by Prometheus (kube-prometheus-stack), which scrapes
+every `PodMonitor` in the cluster. A chart needs two things:
 
-```yaml
-# vmagent scrape config (argocd: charts/infrastructure/victoriametrics)
-- job_name: kubernetes-pods-web
-  kubernetes_sd_configs:
-    - role: pod
-  relabel_configs:
-    - source_labels: [__meta_kubernetes_pod_container_port_name]
-      action: keep
-      regex: web-metrics
-    - action: labelmap
-      regex: __meta_kubernetes_pod_label_(.+)
-    - source_labels: [__meta_kubernetes_namespace]
-      target_label: kubernetes_namespace
-    - source_labels: [__meta_kubernetes_pod_name]
-      target_label: kubernetes_pod_name
-```
+1. **A `PodMonitor`** for the `web-metrics` port:
+
+   ```yaml
+   apiVersion: monitoring.coreos.com/v1
+   kind: PodMonitor
+   metadata:
+     name: {{ .Values.shortName }}-caddy
+     labels:
+       app: {{ .Values.shortName }}
+   spec:
+     jobLabel: app
+     podMetricsEndpoints:
+       - port: web-metrics
+         path: /metrics
+         interval: 15s
+         scrapeTimeout: 10s
+     selector:
+       matchLabels:
+         app: {{ .Values.shortName }}
+   ```
+
+2. **A CiliumNetworkPolicy rule** letting the `prometheus-stack` namespace
+   reach 9145:
+
+   ```yaml
+   # in the chart's CiliumNetworkPolicy ingress rules
+   - fromEndpoints:
+       - matchLabels:
+           io.kubernetes.pod.namespace: prometheus-stack
+     toPorts:
+       - ports:
+           - port: "9145"
+   ```
+
+The profiledashboard chart does both in Caddy mode
+(`templates/podmonitor_caddy.yaml`).
 
 The image runs as `nhsla` (1000:1000), and only `/tmp` needs to be writable.
 The upstream binary's `cap_net_bind_service` file capability is removed (and

@@ -17,16 +17,22 @@ each environment can switch on its own and switch back.
 | Error pages | five ~210 KB pages in the OpenResty image | one 16 KB template in the image |
 | Path blocking | regexes in each `site.conf` | shared rules in the image, plus a profile's extras |
 | Site-specific rules | in `site.conf` | a small `*.caddy` ConfigMap mounted at `/etc/caddy/site.d` (or `/etc/caddy/php.d` for PHP settings) |
-| Metrics | Lua exporter on 9145 (not scraped) | built in on 9145 (needs a scrape job: see [Metrics](#metrics)) |
-| Base | Ubuntu + s6 + OpenResty, `:latest` | `FROM scratch`: one static binary, tag pinned to the Caddy version |
+| Metrics | Lua exporter on 9145 (not scraped) | built in on 9145, scraped by Prometheus through a `PodMonitor` (see [Metrics](#metrics)) |
+| Base | Ubuntu + s6 + OpenResty, `:latest` | `FROM scratch`: one static binary, `:latest` (rebuilt weekly) |
 
 ## Chart changes for every site
 
 In the web container:
 
-1. **Image:** `ghcr.io/nhsleadership/nhsl-caddy:<caddy version>` (e.g.
-   `2.11.9`). Pin the tag rather than using `:latest`/`Always`, as OpenResty
-   did, and let Renovate bump it.
+1. **Image:** `ghcr.io/nhsleadership/nhsl-caddy:latest` with
+   `imagePullPolicy: Always`, so every new pod gets the newest weekly build.
+   This is the same approach as OpenResty. With `IfNotPresent`, a node that
+   has already pulled `latest` keeps running that copy.
+   - Running pods only change when they're replaced (a deploy, a rollout,
+     scaling), so `kubectl rollout restart` picks up a new build.
+   - Pods can briefly run different builds.
+   - To pin a site, use the Caddy version tag (e.g. `2.11.9`) with
+     `IfNotPresent`.
 2. **Environment:**
    - `NHSLA_PROFILE`: `laravel`, `wordpress`, `moodle` or `moodle5` (see the
      table below)
@@ -38,7 +44,7 @@ In the web container:
    there is one), and add an emptyDir at `/tmp`. Remove the `openresty-etc`,
    `openresty-s6` and `openresty-tmp` volumes and the `webconf` (`site.conf`)
    ConfigMap.
-4. **Ports:** name 8080 `web` and 9145 `web-metrics`. The scrape job finds
+4. **Ports:** name 8080 `web` and 9145 `web-metrics`. The PodMonitor finds
    the second by name. Update the probes to the new port name.
 5. **securityContext:** `readOnlyRootFilesystem: true`,
    `runAsNonRoot: true`, `allowPrivilegeEscalation: false` and
@@ -56,10 +62,11 @@ In the PHP-FPM container:
    return 502s. The 15s must fit inside `terminationGracePeriodSeconds`
    (20s in our charts).
 
-In the CiliumNetworkPolicy:
+For metrics:
 
-8. Allow `victoriametrics` to reach **9145** as well as 9253, if Caddy's
-   metrics are going to be scraped.
+8. **Add a `PodMonitor`** for the `web-metrics` port, and **allow the
+   `prometheus-stack` namespace to reach 9145** in the CiliumNetworkPolicy.
+   Both are shown under [Metrics](#metrics).
 
 ## Per-chart notes
 
@@ -100,32 +107,57 @@ These are deliberate, but they're still changes:
 
 ## Metrics
 
-Caddy serves `:9145/metrics`. Our vmagent discovers pods through
-`prometheus.io/*` annotations, which allow one port per pod, and every
-pod's annotation points at PHP-FPM's 9253. Neither OpenResty's nor Caddy's
-web metrics are scraped today.
+Caddy serves `:9145/metrics`. In both clusters, metrics are collected by
+**Prometheus (kube-prometheus-stack)**. It scrapes every `PodMonitor`
+(`podMonitorSelector: {}`), and `prometheus-adapter` feeds the HPAs from it.
+Charts opt in the way their PHP-FPM metrics already do
+(`podmonitor_phpmetrics.yaml` in moodle, wordpress, wordpress-multisite and
+profileman).
 
-To scrape them, add this job to the vmagent config in
-`argocd: charts/infrastructure/victoriametrics`. It finds the `web-metrics`
-port by name, so it picks up every migrated chart automatically:
+There's nothing to change centrally. Each chart needs:
 
 ```yaml
-- job_name: kubernetes-pods-web
-  kubernetes_sd_configs:
-    - role: pod
-  relabel_configs:
-    - source_labels: [__meta_kubernetes_pod_container_port_name]
-      action: keep
-      regex: web-metrics
-    - action: labelmap
-      regex: __meta_kubernetes_pod_label_(.+)
-    - source_labels: [__meta_kubernetes_namespace]
-      target_label: kubernetes_namespace
-    - source_labels: [__meta_kubernetes_pod_name]
-      target_label: kubernetes_pod_name
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ .Values.shortName }}-caddy
+  labels:
+    app: {{ .Values.shortName }}
+spec:
+  jobLabel: app
+  podMetricsEndpoints:
+    - port: web-metrics
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s
+  selector:
+    matchLabels:
+      app: {{ .Values.shortName }}
 ```
 
-Each chart also needs 9145 open to VictoriaMetrics (step 8 above).
+and an ingress rule for Prometheus in its CiliumNetworkPolicy:
+
+```yaml
+# in the chart's CiliumNetworkPolicy ingress rules
+- fromEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: prometheus-stack
+  toPorts:
+    - ports:
+        - port: "9145"
+```
+
+The profiledashboard chart does both in Caddy mode. Nothing scraped OpenResty's 9145.
+
+Two things to know:
+- **The `victoriametrics` rules in the charts are stale.** The
+  `victoriametrics` namespace on staging has been stuck `Terminating` since
+  November 2024, and production runs no VictoriaMetrics pods. Its scrape
+  config in `argocd: charts/infrastructure/victoriametrics` isn't used, and
+  nor are the `prometheus.io/*` pod annotations.
+- **Some charts have no PHP-FPM PodMonitor** (profiledashboard, apply, assess,
+  certificates, tmdiagnostic and wp-satispress). Their CPU/memory HPAs don't need one, but
+  their PHP-FPM pool metrics aren't being collected.
 
 Mapping from the old metric names, for dashboards and alerts:
 
