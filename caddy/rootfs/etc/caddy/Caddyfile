@@ -15,8 +15,20 @@
 	# profile is written. (Not "first": file matchers need the root.)
 	order error after root
 
+	# Kubernetes sends SIGTERM at the same moment it starts removing the pod from
+	# the Service, and Traefik takes a few seconds to stop routing to it. Keep
+	# serving for that long, then give in-flight requests time to finish.
+	# shutdown_delay + grace_period must stay under terminationGracePeriodSeconds.
+	shutdown_delay {$NHSLA_SHUTDOWN_DELAY:5s}
+	grace_period {$NHSLA_GRACE_PERIOD:10s}
+
+	# Label metrics by Host. The site is a catch-all (:8080), and without
+	# observe_catchall_hosts Caddy labels every request host="_other". That's
+	# safe here because Traefik only forwards the hosts it has routes for, so
+	# arbitrary Host headers can't inflate the number of series.
 	metrics {
 		per_host
+		observe_catchall_hosts
 	}
 
 	servers {

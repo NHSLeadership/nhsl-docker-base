@@ -100,6 +100,8 @@ $CFG->xsendfilealiases = ['/dataroot/' => $CFG->dataroot];
 | `NHSLA_MAX_BODY_SIZE` | `1GB` | Larger request bodies get a 413 |
 | `NHSLA_MOODLE_DATAROOT` | `/efs/data` | `moodle5` only: where X-Accel-Redirect files are served from |
 | `NHSLA_LOG_LEVEL` | `WARN` | Level for Caddy's own log on stderr |
+| `NHSLA_SHUTDOWN_DELAY` | `5s` | After SIGTERM, how long to keep serving while Traefik stops routing to the pod |
+| `NHSLA_GRACE_PERIOD` | `10s` | Then, how long in-flight requests get to finish. Keep the sum under `terminationGracePeriodSeconds`. |
 
 ## Per-site additions
 
@@ -151,11 +153,87 @@ exists. Otherwise the request goes to the app as usual. RFC 9116 requires an
     runAsNonRoot: true
     allowPrivilegeEscalation: false
     capabilities: { drop: [ALL] }
+    # Go doesn't see the container memory limit on its own. This makes the GC
+    # work harder near the limit instead of getting OOM-killed.
+    - name: GOMEMLIMIT
+      valueFrom: { resourceFieldRef: { resource: limits.memory } }
   volumeMounts:
     - { name: shared-app, mountPath: /app-shared }
     - { name: caddy-tmp, mountPath: /tmp }   # emptyDir
   livenessProbe:  { httpGet: { path: /healthz, port: web } }
-  readinessProbe: { httpGet: { path: /, port: web } }
+  readinessProbe: { httpGet: { path: /, port: web } }   # or /healthz (see below)
+
+# In the PHP-FPM container: SIGTERM stops php-fpm immediately, so delay it
+# until Caddy has stopped sending requests (shutdown delay + grace period)
+- name: phpfpm
+  lifecycle:
+    preStop: { sleep: { seconds: 15 } }
+```
+
+### Probes, shutdown and scaling
+
+- **Liveness:** use `/healthz`. Caddy answers it itself, without PHP, so a slow
+  or saturated PHP-FPM never gets the web container restarted.
+- **Readiness:** there are two reasonable choices.
+  - `/` goes through the app, so a deploy that returns errors never becomes
+    ready and the rollout stops. The downside is that if the app's dependencies
+    fail (e.g. the database), every pod goes unready at once. The Laravel charts
+    do this today.
+  - `/healthz` (or a TCP check, as the WordPress and Moodle charts use today)
+    leaves PHP readiness to the PHP-FPM container's own probe
+    (`php-fpm-healthcheck --listen-queue=…`). The pod is only ready when both
+    containers are.
+- **Shutdown** (rollouts and HPA scale-in): Kubernetes sends SIGTERM to both
+  containers while it's still removing the pod from the Service.
+  - Caddy keeps serving for `NHSLA_SHUTDOWN_DELAY`, then drains for up to
+    `NHSLA_GRACE_PERIOD`. It needs no `preStop`.
+  - php-fpm stops immediately on SIGTERM, so give its container a
+    `preStop: sleep` at least as long as Caddy's delay plus grace period (15s
+    with the defaults). Without it, requests that are in flight, or that arrive
+    during the delay, get a 502.
+  - Both must fit in `terminationGracePeriodSeconds`, which is 20s in the
+    charts.
+- **HPA:** the charts scale on CPU/memory or on PHP-FPM's
+  `phpfpm_active_processes_utilization` (from the exporter on 9253). Neither
+  depends on the web server. A CPU/memory HPA sums all containers against
+  their requests, so check the web container's requests against real usage
+  after switching. Caddy (Go) uses a little more memory at idle than nginx,
+  and comparable CPU.
+
+### Metrics
+
+Caddy serves Prometheus metrics on `:9145/metrics`, including
+`caddy_http_requests_total`, `caddy_http_request_duration_seconds` and
+`caddy_http_requests_in_flight`. They're labelled by `host` (the real Host header, not `_other`), and the duration histogram also by `code` and `method`.
+
+Caddy records metrics **per handler**: a request is counted once for each
+middleware it passes through (`vars`, `headers`, …). Don't sum across
+handlers. For dashboards and alerts, use:
+- `handler="subroute"` for PHP requests (rate, latency, status codes).
+  `php_fastcgi` runs as a subroute, as do `handle` blocks such as
+  security.txt or `site.d` handlers.
+- `handler="file_server"` for static files and Caddy's own error pages
+
+Our vmagent discovers pods through `prometheus.io/*` annotations, which allow
+one port per pod, and that port is PHP-FPM's 9253. To scrape Caddy as well,
+add a job that finds the container port by name, and let VictoriaMetrics reach
+9145 in the chart's CiliumNetworkPolicy:
+
+```yaml
+# vmagent scrape config (argocd: charts/infrastructure/victoriametrics)
+- job_name: kubernetes-pods-web
+  kubernetes_sd_configs:
+    - role: pod
+  relabel_configs:
+    - source_labels: [__meta_kubernetes_pod_container_port_name]
+      action: keep
+      regex: web-metrics
+    - action: labelmap
+      regex: __meta_kubernetes_pod_label_(.+)
+    - source_labels: [__meta_kubernetes_namespace]
+      target_label: kubernetes_namespace
+    - source_labels: [__meta_kubernetes_pod_name]
+      target_label: kubernetes_pod_name
 ```
 
 The image runs as `nhsla` (1000:1000), and only `/tmp` needs to be writable.

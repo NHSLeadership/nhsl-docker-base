@@ -107,6 +107,10 @@ check "site.d handle beats profile rules" 200 /proxied.js -- 'site.d js'
 check "shared blocks still apply"        404 /proxied.js/.env
 check "php.d hook (env reaches PHP)"     200 / -- 'NHSLA_TEST=php.d-works'
 check "504 on PHP timeout"               504 /sleep.php -- '504 Gateway Timeout'
+curl -s -o /dev/null -H 'Host: london.leadershipacademy.nhs.uk' localhost:18080/
+metrics=$(curl -s localhost:19145/metrics)
+if grep -qE 'caddy_http_request_duration_seconds_count\{code="200",handler="subroute",host="london\.leadershipacademy\.nhs\.uk"' <<<"$metrics"; then
+  pass=$((pass+1)); echo "  ok   PHP metrics labelled by real host"; else fail=$((fail+1)); echo "  FAIL PHP metrics not labelled by host"; fi
 check "413 over NHSLA_MAX_BODY_SIZE"     413 / -X POST --data-binary @$T/big -H 'Content-Type: application/octet-stream'
 rm -f $T/root/srv/well-known/security.txt $T/root/etc/caddy/site.d/test.caddy $T/root/etc/caddy/php.d/test.caddy
 stop
@@ -184,6 +188,14 @@ check "X-Accel missing file -> HTML 404" 404 /missingfile.php -- '404 Page Not F
 check "/dataroot not reachable directly" 200 /dataroot/filedir/ab/cdef -- 'SCRIPT_NAME=/r.php'
 check "security headers"                 200 / -- '^x-frame-options: SAMEORIGIN'
 stop
+
+# ---------------- shutdown: keeps serving for NHSLA_SHUTDOWN_DELAY after SIGTERM
+run laravel $L NHSLA_SHUTDOWN_DELAY=2s NHSLA_GRACE_PERIOD=2s
+kill -TERM $CADDY_PID; sleep 1
+check "still serving 1s after SIGTERM"   200 / -- 'SCRIPT_NAME=/index.php'
+wait $CADDY_PID 2>/dev/null
+got=$(curl -s -o /dev/null -w '%{http_code}' localhost:18080/healthz)
+if [[ $got == 000 ]]; then pass=$((pass+1)); echo "  ok   stopped after delay + grace period"; else fail=$((fail+1)); echo "  FAIL still running after shutdown ($got)"; fi
 
 kill $FPM; wait $FPM 2>/dev/null
 echo; echo "passed=$pass failed=$fail"
