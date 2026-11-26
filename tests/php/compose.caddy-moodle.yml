@@ -1,0 +1,12 @@
+# Layered on compose.caddy.yml: the moodle profile, with the charts' Caddy-mode
+# PHP override mounted into php-fpm's conf.d before it starts, as the moodle
+# and moodle5x charts do (volumeMounts.phpConfPath). PHP_VERSION is the image's.
+services:
+  caddy:
+    environment:
+      NHSLA_PROFILE: moodle
+      NHSLA_ROOT: /app-shared/public
+      NHSLA_MOODLE_DATAROOT: /tmp
+  phpfpm:
+    volumes:
+      - ./moodle-caddy.ini:/etc/php/${PHP_VERSION:?}/fpm/conf.d/99-nhsla.ini:ro
