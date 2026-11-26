@@ -50,27 +50,36 @@ In the web container:
 
 In the PHP-FPM container:
 
-7a. **An app image built on a current `nhsl-ubuntu-phpv2` image.** Caddy
-   needs `cgi.fix_pathinfo = 1`. With `0`, php-fpm takes the script path from
-   `PATH_TRANSLATED`, which Caddy sends as `<root><PATH_INFO>`, and refuses it
-   ("Access denied", 403). That breaks every URL with a path after `.php`:
-   Moodle's `theme/styles.php/…`, `lib/javascript.php/…`, `pluginfile.php/…`
-   (including X-Accel downloads), and `index.php/…`. nginx splits the path
-   itself, so OpenResty works with either value.
+7a. **Moodle only: `cgi.fix_pathinfo = 1` in a PHP ini drop-in, in Caddy
+   mode.** The base image keeps `cgi.fix_pathinfo = 0`. With `0`, php-fpm
+   takes the script path from `PATH_TRANSLATED`, which Caddy sends as
+   `<root><PATH_INFO>`, and refuses it ("Access denied", 403) for every URL
+   with a path after `.php`. nginx splits the path itself, so OpenResty works
+   with `0`.
 
-   The base image sets `cgi.fix_pathinfo = 1`, with
-   `security.limit_extensions = .php` in `www.conf`, so charts don't need a PHP
-   ini drop-in. Images built before this change have `0`, so **check the app
-   image has been rebuilt** since then before switching a site to Caddy (any
-   new build of the app picks it up). It can't be set from the Caddy side: a
-   per-request `PHP_ADMIN_VALUE` arrives after php-fpm has already resolved
-   the script, and leaks into later requests on the same worker.
+   Moodle needs those URLs (`theme/styles.php/…`, `lib/javascript.php/…`,
+   `pluginfile.php/…` including X-Accel downloads), so the moodle and
+   moodle5x charts add `cgi.fix_pathinfo = 1` to their `99-nhsla.ini`
+   ConfigMap when `webServer: caddy`, with a `checksum/phpconf` annotation to
+   roll the pods. It's mounted at `volumeMounts.phpConfPath`, which must be
+   the image's own PHP version (`/etc/php/<version>/fpm/conf.d/`): a file
+   anywhere else is silently ignored.
 
-   This is safe: two independent guards stop an uploaded `evil.jpg` being run
-   via `/uploads/evil.jpg/x.php`. php-fpm only runs `.php` files, whatever the
-   web server sends, and `php_fastcgi` only proxies paths whose `.php` part
-   is an existing file. `tests/php/security.sh` checks each guard on its own,
-   behind Caddy and behind OpenResty with our charts' site.confs.
+   The Laravel and WordPress charts don't set it. Their URLs go through a
+   front controller, so only literal `index.php/…` URLs are affected (403
+   behind Caddy). If an app does need `.php/…` URLs, add the same drop-in
+   for that chart in Caddy mode.
+
+   It can't be set from Caddy: php-fpm resolves the script before applying a
+   per-request `PHP_VALUE`/`PHP_ADMIN_VALUE`, and the value then leaks into
+   later requests on that worker.
+
+   With `1`, php-fpm walks back from a missing `/uploads/evil.jpg/x.php` to
+   `evil.jpg`. The base image's `security.limit_extensions = .php` (in
+   `www.conf`) is what stops it running: php-fpm only runs `.php` files,
+   whatever the web server sends. `php_fastcgi` also only proxies paths whose
+   `.php` part exists. `tests/php` checks both, including Moodle on Caddy
+   with the override.
 
 7. **`lifecycle.preStop.sleep.seconds: 15`.** php-fpm stops immediately on
    SIGTERM. Caddy keeps serving for 5s after SIGTERM and then drains for up

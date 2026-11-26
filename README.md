@@ -62,7 +62,7 @@ php.ini: `/nhsla/etc/php.ini`
 www pool: `/nhsla/etc/www.conf`
 additional configuration files may be added into `/etc/php/fpm/conf.d/*.ini`
 
-If you replace `php.ini` or `www.conf` wholesale, keep their security settings: `cgi.fix_pathinfo=1` (needed behind Caddy) is only safe alongside `security.limit_extensions = .php` in `www.conf`, which stops php-fpm running anything that isn't a `.php` file (for example an uploaded image containing PHP). Prefer a `conf.d` drop-in for `php.ini` changes. `tests/php/run.sh` checks these settings behind Caddy and OpenResty.
+If you replace `php.ini` or `www.conf` wholesale, keep their security settings: `cgi.fix_pathinfo=0` in `php.ini`, and `security.limit_extensions = .php` in `www.conf`, which stops php-fpm running anything that isn't a `.php` file (for example an uploaded image containing PHP). Prefer a `conf.d` drop-in for `php.ini` changes. Moodle behind Caddy needs `cgi.fix_pathinfo=1`, which its charts set in a drop-in (see [caddy/MIGRATING.md](caddy/MIGRATING.md)); that's only safe with `limit_extensions` in place. `tests/php/run.sh` checks these settings behind Caddy and OpenResty.
 
 **PHP CLI** (cron, wp-cli, artisan, etc.):
 The CLI uses Ubuntu's stock `/etc/php/cli/php.ini`, plus `/etc/php/cli/conf.d/99-nhsla-cli.ini` (from `/nhsla/setup/php-cli.ini`), which sets `variables_order = "EGPCS"` so `$_ENV` is populated as it is under PHP-FPM.

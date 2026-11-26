@@ -1,6 +1,7 @@
 # The PHP-FPM image under test behind the published nhsl-caddy image, run the
-# way Kubernetes does. No php.ini overrides: tests/php/security.sh checks the
-# image's own settings. Used by the build-php workflow.
+# way Kubernetes does, with the image's own PHP settings (laravel profile).
+# compose.caddy-moodle.yml layers Moodle's override on top. Used by the
+# build-php workflow through run.sh.
 #
 #   PHPFPM_IMAGE=nhsl-ubuntu-phpv2:test docker compose -f tests/php/compose.caddy.yml up -d
 name: php-test-caddy
