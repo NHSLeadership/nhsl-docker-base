@@ -1,0 +1,3 @@
+avatar.jpg and avatar.phar are "uploads" containing PHP. tests/php/security.sh
+checks that neither is ever run: the page only prints UPLOAD-EXECUTED if PHP
+executes the file (the source has the marker split in two).

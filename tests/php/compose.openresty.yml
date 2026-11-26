@@ -1,0 +1,53 @@
+# The PHP-FPM image under test behind the published nhsl-ubuntu-openresty
+# image, with one of the site.confs our charts use (SITE_CONF). Used by the
+# build-php workflow to check that image changes don't break OpenResty sites.
+#
+#   PHPFPM_IMAGE=nhsl-ubuntu-phpv2:test SITE_CONF=./openresty-moodle.conf \
+#     docker compose -f tests/php/compose.openresty.yml up -d
+name: php-test-openresty
+services:
+  openresty:
+    image: ${OPENRESTY_IMAGE:-ghcr.io/nhsleadership/nhsl-ubuntu-openresty:latest}
+    read_only: true
+    ports:
+      - "${HOST_PORT:-8080}:8080"
+    environment:
+      AWS_HOST_ENVIRONMENT: "true"
+      SITE_NAME: php-test
+      S6_YES_I_WANT_A_WORLD_WRITABLE_RUN_BECAUSE_KUBERNETES: "1"
+    volumes:
+      - ${SITE_CONF:-./openresty-moodle.conf}:/etc/openresty/site.conf:ro
+      - app-shared:/app-shared
+      - web-run:/run
+      - web-tmp:/tmp
+      - web-nhsla:/nhsla/etc
+
+  phpfpm:
+    image: ${PHPFPM_IMAGE:?set PHPFPM_IMAGE to the image under test}
+    read_only: true
+    network_mode: "service:openresty"
+    environment:
+      AWS_HOST_ENVIRONMENT: "true"
+      S6_YES_I_WANT_A_WORLD_WRITABLE_RUN_BECAUSE_KUBERNETES: "1"
+    volumes:
+      - ../app/:/app/public/:ro
+      - app-shared:/app-shared
+      - fpm-run:/run
+      - fpm-tmp:/tmp
+      - fpm-nhsla:/nhsla/etc
+
+volumes:
+  app-shared:
+    driver_opts: { type: tmpfs, device: tmpfs, o: "size=256m,uid=1000,gid=1000" }
+  web-run:
+    driver_opts: { type: tmpfs, device: tmpfs, o: "size=64m,uid=1000,gid=1000" }
+  web-tmp:
+    driver_opts: { type: tmpfs, device: tmpfs, o: "size=64m,uid=1000,gid=1000" }
+  web-nhsla:
+    driver_opts: { type: tmpfs, device: tmpfs, o: "size=64m,uid=1000,gid=1000" }
+  fpm-run:
+    driver_opts: { type: tmpfs, device: tmpfs, o: "size=64m,uid=1000,gid=1000" }
+  fpm-tmp:
+    driver_opts: { type: tmpfs, device: tmpfs, o: "size=64m,uid=1000,gid=1000" }
+  fpm-nhsla:
+    driver_opts: { type: tmpfs, device: tmpfs, o: "size=64m,uid=1000,gid=1000" }
