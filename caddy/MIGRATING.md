@@ -50,16 +50,27 @@ In the web container:
 
 In the PHP-FPM container:
 
-7a. **`cgi.fix_pathinfo = 1`** in a PHP ini drop-in (for example the chart's
-   `conf.d` ConfigMap). The base image's `php.ini` sets it to `0`. With `0`,
-   php-fpm takes the script path from `PATH_TRANSLATED`, which Caddy sends as
-   `<root><PATH_INFO>`, and refuses it ("Access denied", 403). That breaks
-   every URL with a path after `.php`: Moodle's `theme/styles.php/…`,
-   `lib/javascript.php/…`, `pluginfile.php/…` (including X-Accel downloads),
-   and `index.php/…`. nginx never sent `PATH_TRANSLATED`, so OpenResty wasn't
-   affected. This is safe with Caddy, because `php_fastcgi` only proxies
-   paths whose `.php` part is an existing file and php-fpm still enforces
-   `security.limit_extensions`.
+7a. **An app image built on a current `nhsl-ubuntu-phpv2` image.** Caddy
+   needs `cgi.fix_pathinfo = 1`. With `0`, php-fpm takes the script path from
+   `PATH_TRANSLATED`, which Caddy sends as `<root><PATH_INFO>`, and refuses it
+   ("Access denied", 403). That breaks every URL with a path after `.php`:
+   Moodle's `theme/styles.php/…`, `lib/javascript.php/…`, `pluginfile.php/…`
+   (including X-Accel downloads), and `index.php/…`. nginx splits the path
+   itself, so OpenResty works with either value.
+
+   The base image sets `cgi.fix_pathinfo = 1`, with
+   `security.limit_extensions = .php` in `www.conf`, so charts don't need a PHP
+   ini drop-in. Images built before this change have `0`, so **check the app
+   image has been rebuilt** since then before switching a site to Caddy (any
+   new build of the app picks it up). It can't be set from the Caddy side: a
+   per-request `PHP_ADMIN_VALUE` arrives after php-fpm has already resolved
+   the script, and leaks into later requests on the same worker.
+
+   This is safe: two independent guards stop an uploaded `evil.jpg` being run
+   via `/uploads/evil.jpg/x.php`. php-fpm only runs `.php` files, whatever the
+   web server sends, and `php_fastcgi` only proxies paths whose `.php` part
+   is an existing file. `tests/php/security.sh` checks each guard on its own,
+   behind Caddy and behind OpenResty with our charts' site.confs.
 
 7. **`lifecycle.preStop.sleep.seconds: 15`.** php-fpm stops immediately on
    SIGTERM. Caddy keeps serving for 5s after SIGTERM and then drains for up
