@@ -69,8 +69,9 @@ In the PHP-FPM container:
 
 In the CiliumNetworkPolicy:
 
-8. Allow `victoriametrics` to reach **9145** as well as 9253, if Caddy's
-   metrics are going to be scraped.
+8. Allow the `prometheus-stack` namespace to reach **9145** as well as 9253,
+   and add a `podmonitor_caddy.yaml`, if Caddy's metrics are going to be
+   scraped.
 
 ## Per-chart notes
 
@@ -111,32 +112,29 @@ These are deliberate, but they're still changes:
 
 ## Metrics
 
-Caddy serves `:9145/metrics`. Our vmagent discovers pods through
-`prometheus.io/*` annotations, which allow one port per pod, and every
-pod's annotation points at PHP-FPM's 9253. Neither OpenResty's nor Caddy's
-web metrics are scraped today.
-
-To scrape them, add this job to the vmagent config in
-`argocd: charts/infrastructure/victoriametrics`. It finds the `web-metrics`
-port by name, so it picks up every migrated chart automatically:
+Caddy serves `:9145/metrics` on the `web-metrics` port. kube-prometheus-stack
+scrapes it through a PodMonitor in each chart (profiledashboard and moodle
+already have one):
 
 ```yaml
-- job_name: kubernetes-pods-web
-  kubernetes_sd_configs:
-    - role: pod
-  relabel_configs:
-    - source_labels: [__meta_kubernetes_pod_container_port_name]
-      action: keep
-      regex: web-metrics
-    - action: labelmap
-      regex: __meta_kubernetes_pod_label_(.+)
-    - source_labels: [__meta_kubernetes_namespace]
-      target_label: kubernetes_namespace
-    - source_labels: [__meta_kubernetes_pod_name]
-      target_label: kubernetes_pod_name
+# templates/podmonitor_caddy.yaml (see profiledashboard or moodle in helm-charts)
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ .Values.shortName }}-caddy
+spec:
+  jobLabel: app
+  podMetricsEndpoints:
+    - port: web-metrics
+      path: /metrics
+      interval: 15s
+  selector:
+    matchLabels:
+      app: {{ .Values.shortName }}
 ```
 
-Each chart also needs 9145 open to VictoriaMetrics (step 8 above).
+Each chart also needs 9145 open to the `prometheus-stack` namespace (step 8
+above).
 
 Mapping from the old metric names, for dashboards and alerts:
 
