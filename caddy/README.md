@@ -225,26 +225,26 @@ handlers. For dashboards and alerts, use:
   security.txt or `site.d` handlers.
 - `handler="file_server"` for static files and Caddy's own error pages
 
-Our vmagent discovers pods through `prometheus.io/*` annotations, which allow
-one port per pod, and that port is PHP-FPM's 9253. To scrape Caddy as well,
-add a job that finds the container port by name, and let VictoriaMetrics reach
-9145 in the chart's CiliumNetworkPolicy:
+kube-prometheus-stack scrapes pods through PodMonitors (every PodMonitor in the
+cluster is picked up). To scrape Caddy, add a PodMonitor for the `web-metrics`
+port and let the `prometheus-stack` namespace reach 9145 in the chart's
+CiliumNetworkPolicy:
 
 ```yaml
-# vmagent scrape config (argocd: charts/infrastructure/victoriametrics)
-- job_name: kubernetes-pods-web
-  kubernetes_sd_configs:
-    - role: pod
-  relabel_configs:
-    - source_labels: [__meta_kubernetes_pod_container_port_name]
-      action: keep
-      regex: web-metrics
-    - action: labelmap
-      regex: __meta_kubernetes_pod_label_(.+)
-    - source_labels: [__meta_kubernetes_namespace]
-      target_label: kubernetes_namespace
-    - source_labels: [__meta_kubernetes_pod_name]
-      target_label: kubernetes_pod_name
+# templates/podmonitor_caddy.yaml (see profiledashboard or moodle in helm-charts)
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ .Values.shortName }}-caddy
+spec:
+  jobLabel: app
+  podMetricsEndpoints:
+    - port: web-metrics
+      path: /metrics
+      interval: 15s
+  selector:
+    matchLabels:
+      app: {{ .Values.shortName }}
 ```
 
 The image runs as `nhsla` (1000:1000), and only `/tmp` needs to be writable.
