@@ -33,7 +33,15 @@ rewrite @nhsla_ms_admin_php {re.nhsla_ms_admin_php.1}
 }
 rewrite @nhsla_ms_php {re.nhsla_ms_php.1}
 
-php_fastcgi {$NHSLA_PHP_UPSTREAM:127.0.0.1:9000} {
+# Uploads are only ever static files, as with nginx's
+# "location ^~ /wp-content/uploads/": a missing one gets the 404 page from
+# file_server rather than booting WordPress (which redirects it to the home
+# page). This is a matcher rather than an early "error", so it applies after
+# the multisite rewrites above (/<site>/wp-content/uploads/…), and site.d
+# handlers still get a look in.
+@nhsla_wp_not_uploads not path /wp-content/uploads/*
+
+php_fastcgi @nhsla_wp_not_uploads {$NHSLA_PHP_UPSTREAM:127.0.0.1:9000} {
 	read_timeout {$NHSLA_PHP_TIMEOUT:30s}
 	import /etc/caddy/php.d/*.caddy
 }
