@@ -149,10 +149,12 @@ The following ports are listening by default. Because of the unprivileged nature
 | mysql                | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    |
 | mysqli               | ✔️    | ✔️    | ✔️    | ❌    | ❌    | ❌    | ❌    | ❌    | ❌    |
 | opcache              | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️*   | 
+| opentelemetry        | ❌    | ❌    | ❌    | ❌    | ❌    | ✔️    | ✔️    | ✔️    | ✔️    |
 | pdo                  | ✔️    | ✔️    | ✔️    | ❌    | ❌    | ❌    | ❌    | ❌    | ❌    |
 | pgsql                | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    |
 | phar                 | ✔️    | ✔️    | ✔️    | ❌    | ❌    | ❌    | ❌    | ❌    | ❌    |
 | posix                | ✔️    | ✔️    | ✔️    | ❌    | ❌    | ❌    | ❌    | ❌    | ❌    |
+| protobuf             | ❌    | ❌    | ❌    | ❌    | ❌    | ✔️    | ✔️    | ✔️    | ✔️    |
 | redis                | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    |
 | soap                 | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    |
 | sockets              | ✔️    | ✔️    | ✔️    | ❌    | ❌    | ❌    | ❌    | ❌    | ❌    |
@@ -164,6 +166,8 @@ The following ports are listening by default. Because of the unprivileged nature
 | zip                  | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    | ✔️    |
 
 
+
+> The `opentelemetry` extension does nothing on its own. It only produces traces once an app installs the OpenTelemetry SDK and instrumentation packages through Composer and sets the `OTEL_*` environment variables. `protobuf` speeds up the OTLP exporter.
 
 > *opcache is compiled into the PHP 8.5 core, so it is present and enabled by default without a separate `php8.5-opcache` package (which no longer exists upstream).
 

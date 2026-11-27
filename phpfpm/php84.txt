@@ -19,3 +19,5 @@ php8.4-sqlite3
 php8.4-intl
 php8.4-redis
 php8.4-pgsql
+php8.4-opentelemetry
+php8.4-protobuf
