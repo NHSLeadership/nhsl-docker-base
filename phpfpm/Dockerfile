@@ -111,6 +111,7 @@ RUN set -eux; \
         -e 's|;daemonize\s*=\s*yes|daemonize = no|g' \
         -e 's|pid =.*|pid = /nhsla/etc/php-fpm.pid|' \
         -e 's|;log_level = notice|log_level = warning|g' \
+        -e 's|;log_limit = .*|log_limit = 16384|' \
         /etc/php/${PHP_VERSION}/fpm/php-fpm.conf; \
     \
     # Symlink config files to /nhsla/etc/
