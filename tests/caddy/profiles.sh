@@ -39,7 +39,7 @@ mk $L/sleep.php '<?php sleep(5);'
 W=$A/wp
 mk $W/index.php "$dump"; mk $W/wp-login.php "$dump"; mk $W/wp-admin/index.php "$dump"; mk $W/wp-admin/options.php "$dump"
 mk $W/wp-content/uploads/evil.php '<?php echo "EXECUTED";'; mk $W/wp-content/themes/t/style.css 'a{}'
-mk $W/wp-content/plugins/p/vendor/lib.js 'x'
+mk $W/wp-content/plugins/p/vendor/lib.js 'x'; mk $W/wp-content/uploads/2024/01/pic.jpg 'JPEGBYTES'
 M=$A/moodle
 mk $M/index.php "$dump"; mk $M/course/index.php "$dump"; mk $M/pluginfile.php "$dump"; mk $M/lib/vendor/x.js x; mk $M/README.md x
 mk $M/admin/environment.xml x; mk $M/local/x/readme_moodle.txt x; mk $M/theme/styles.php "$dump"; mk $M/admin/tool/behat/index.php x
@@ -144,6 +144,13 @@ check "multisite static /site/wp-content" 200 /site1/wp-content/themes/t/style.c
 check "wp-admin trailing-slash redirect" 301 /site1/wp-admin -- 'location: /site1/wp-admin/'
 check "uploads PHP not executed"         403 /wp-content/uploads/evil.php
 grep -q EXECUTED $T/body && { fail=$((fail+1)); echo "  FAIL uploads PHP executed"; }
+# Uploads are static only (nginx: location ^~ /wp-content/uploads/): a missing
+# one is a 404 without booting WordPress, including via a multisite rewrite
+check "upload served statically"         200 /wp-content/uploads/2024/01/pic.jpg -- 'JPEGBYTES'
+check "missing upload is a 404 page"     404 /wp-content/uploads/2024/01/nope.jpg -- '404 Page Not Found'
+grep -q SCRIPT_NAME= $T/body && { fail=$((fail+1)); echo "  FAIL missing upload reached PHP"; }
+check "multisite missing upload is a 404" 404 /site1/wp-content/uploads/2024/01/nope.jpg -- '404 Page Not Found'
+check "multisite upload served"          200 /site1/wp-content/uploads/2024/01/pic.jpg -- 'JPEGBYTES'
 check "plugin vendor asset allowed"      200 /wp-content/plugins/p/vendor/lib.js
 check "static cached 12h"                200 /wp-content/themes/t/style.css -- 'cache-control: max-age=43200'
 check "multisite still blocks .env"      404 /site1/.env
