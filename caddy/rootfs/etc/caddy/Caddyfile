@@ -3,7 +3,6 @@
 #   - mount extra site rules into /etc/caddy/site.d/*.caddy
 #   - mount extra php_fastcgi subdirectives into /etc/caddy/php.d/*.caddy
 # See caddy/README.md in nhsl-docker-base.
-
 {
 	# Behind Traefik: no TLS, no admin API, nothing persisted to disk
 	auto_https off
